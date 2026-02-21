@@ -1,9 +1,10 @@
 from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import SourceDocument
-from typing import Any
-from typing import Optional
 from typing import TypedDict
+from typing import Optional
+from typing import Any
+
 
 
 class KnowledgeExtractionState(TypedDict):
