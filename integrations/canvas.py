@@ -1,23 +1,10 @@
 import json
 import os
 import requests
-from typing import Optional, TypedDict
+from typing import Optional
+from StudyOntology.lib import Assignment
 
 MOCK_MODE: bool = True
-
-# TYPES
-
-CanvasAssignment = TypedDict('CanvasAssignment', {
-  'course_name': str,
-  'assignment_name': str,
-  'assignment_description': Optional[str],
-  'deadline': Optional[str]
-})
-
-CanvasCourse = TypedDict('CanvasCourse', {
-  'id': int,
-  'name': str
-})
 
 # API CALLS
 
@@ -38,7 +25,7 @@ def get_courses(token: Optional[str] = None) -> list[dict]:
 def get_assignments(course_id: int, token: Optional[str] = None) -> list[dict]:
   """Fetch all assignments for a given course"""
   if MOCK_MODE:
-    return []  # swap in mock assignments here when ready
+    return []
   else:
     response = requests.get(
       f"https://canvas.calpoly.edu/api/v1/courses/{course_id}/assignments",
@@ -59,9 +46,9 @@ def filter_active_courses(courses: list[dict]) -> list[dict]:
 def build_assignments(
   active_courses: list[dict],
   token: Optional[str]
-) -> list[CanvasAssignment]:
-  """Fetch assignments for each course and attach course name, description, deadline"""
-  assignments: list[CanvasAssignment] = []
+) -> list[Assignment]:
+  """Fetch assignments and map to ontology Assignment objects"""
+  assignments: list[Assignment] = []
 
   for course in active_courses:
     course_id: int = course["id"]
@@ -69,44 +56,36 @@ def build_assignments(
     raw_assignments: list[dict] = get_assignments(course_id, token)
 
     for a in raw_assignments:
-      assignments.append(CanvasAssignment(
-        course_name=course_name,
-        assignment_name=a.get("name", "Untitled"),
-        assignment_description=a.get("description"),
-        deadline=a.get("due_at")
+      assignments.append(Assignment(
+        id=str(a.get("id")),
+        name=a.get("name", "Untitled"),
+        description=a.get("description"),
+        canvas_assignment_id=a.get("id"),
+        due_date=a.get("due_at"),
+        points_possible=a.get("points_possible"),
+        html_url=a.get("html_url"),
+        is_published=a.get("published"),
+        submission_types=a.get("submission_types", [])
       ))
 
   return assignments
-
-def build_courses(active_courses: list[dict]) -> list[CanvasCourse]:
-  """Convert raw course dicts into typed CanvasCourse objects"""
-  return [
-    CanvasCourse(
-      id=c["id"],
-      name=c["name"]
-    )
-    for c in active_courses
-  ]
 
 # LANGGRAPH NODE
 
 def canvas_node(state: dict) -> dict:
   """
   LangGraph node: fetch Canvas courses and assignments, store in state.
-  Requires state to have: processing_log, canvas_courses, canvas_assignments
   """
   token: Optional[str] = os.environ.get("CANVAS_API_KEY")
 
   raw_courses: list[dict] = get_courses(token)
   active_courses: list[dict] = filter_active_courses(raw_courses)
-
-  courses: list[CanvasCourse] = build_courses(active_courses)
-  assignments: list[CanvasAssignment] = build_assignments(active_courses, token)
+  assignments: list[Assignment] = build_assignments(active_courses, token)
 
   return {
-    "canvas_courses": courses,
-    "canvas_assignments": assignments,
+    "canvas_courses": active_courses,
+    "canvas_assignments": [a.model_dump() for a in assignments],
     "processing_log": state["processing_log"] + [
-      f"Fetched {len(courses)} courses and {len(assignments)} assignments from Canvas"
+      f"Fetched {len(active_courses)} courses and {len(assignments)} assignments from Canvas"
     ]
   }
