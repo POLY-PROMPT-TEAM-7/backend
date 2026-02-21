@@ -27,7 +27,7 @@ def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   )
 
   try:
-    serialized_graph: dict[str, Any] = graph_object.as_json()
+    serialized_graph: dict[str, Any] = graph_object.model_dump()
     msg: str = f"[mkgraph] Built KnowledgeGraph with {len(entities)} entities, {len(relationships)} relationships"
     return {
       "knowledge_graph": serialized_graph,
