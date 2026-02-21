@@ -6,7 +6,6 @@ from StudyOntology.lib import Person
 from StudyOntology.lib import Theory
 from typing import Any
 
-
 def inject_graph_schema_options(state: KnowledgeExtractionState) -> dict[str, Any]:
   options: dict[str, Any] = {
     "entity_types": ["Concept", "Theory", "Person", "Method"],

@@ -5,8 +5,6 @@ from typing import TypedDict
 from typing import Optional
 from typing import Any
 
-
-
 class KnowledgeExtractionState(TypedDict):
   filename: str
   document_type: str

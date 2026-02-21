@@ -17,7 +17,10 @@ where = ["lib"]
 deploy-backend = "backend_placeholder.server:runner"
 
 [tool.ruff]
-extend-exclude = ["*.py"]
+extend-exclude = ["*.py", "^.*$"]
 force-exclude = true
 line-length = 320
 indent-width = 2
+
+[tool.pylint.master]
+ignore-paths = ["^.*$"]

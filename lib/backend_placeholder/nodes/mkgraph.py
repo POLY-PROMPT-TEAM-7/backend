@@ -8,7 +8,6 @@ from StudyOntology.lib import Theory
 from StudyOntology.lib import Concept
 from typing import Any
 
-
 def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   entities: list[KnowledgeEntity] = state.get("raw_entities", [])
   relationships: list[KnowledgeRelationship] = state.get("raw_relationships", [])
