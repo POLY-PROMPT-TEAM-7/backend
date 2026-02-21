@@ -3,7 +3,6 @@ from backend_placeholder.models import ExtractedGraphPayload
 from langchain_core.messages import SystemMessage
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
 from typing import cast
 from typing import Any
 import os
