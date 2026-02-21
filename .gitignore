@@ -9,5 +9,6 @@
 *__pycache__/
 *plans/
 *.duckdb
+*.env
 *result/
 *result
