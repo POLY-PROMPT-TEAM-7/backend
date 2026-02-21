@@ -14,6 +14,11 @@ final: prev: {
           pydantic
           fastapi
           uvicorn
+          langchain-core
+          langchain-openai
+          langgraph
+          python-dotenv
+          pdfplumber
         ]);
         doCheck = false;
       };
