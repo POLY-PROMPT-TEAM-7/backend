@@ -11,6 +11,8 @@ final: prev: {
           wheel
         ];
         propagatedBuildInputs = (with pyFinal; [
+          langchain-openai
+          langchain
           langgraph
           pydantic
           fastapi
