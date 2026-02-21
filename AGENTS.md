@@ -1,13 +1,73 @@
-# Backend Development Guide
+# PROJECT KNOWLEDGE BASE
 
-## Project Overview
-FastAPI backend for KG Study Tool - a knowledge graph extraction and visualization system for course materials.
+**Generated:** 2026-02-21
+**Commit:** docs-publish (added workflow for GHCR docker image builds)
 
-**Tech Stack**: Python 3.13+, FastAPI, Pydantic, uvicorn, Nix
+## OVERVIEW
+FastAPI backend for KG Study Tool - knowledge graph extraction/visualization for course materials. Early development stage.
 
----
+**Tech Stack**: Python 3.13+, FastAPI, Pydantic, uvicorn, Nix 2.25.3
 
-## Development Commands
+## STRUCTURE
+```
+./
+├── flake.nix              # Nix flake, defines deploy-backend shellApp
+├── pyproject.toml          # Project metadata, pyright config
+├── AGENTS.md               # This file
+├── lib/backend_placeholder/ # Python package
+│   ├── __init__.py        # Package marker (empty)
+│   ├── api.py             # FastAPI app instance (APP) and routes
+│   ├── models.py          # Pydantic models
+│   └── server.py          # serve() -> uvicorn.run(APP)
+├── nix/
+│   └── docker.nix          # dockerTools.buildImage, packages.docker output
+└── .github/workflows/
+    └── docs.yml             # Builds flake docker image, pushes to GHCR
+```
+
+## WHERE TO LOOK
+| Task | Location | Notes |
+|------|----------|-------|
+| FastAPI app instance | lib/backend_placeholder/api.py | APP: FastAPI = FastAPI() |
+| Routes/endpoints | lib/backend_placeholder/api.py | @APP.get("/") decorator pattern |
+| Pydantic models | lib/backend_placeholder/models.py | BaseModel inheritance |
+| Server entrypoint | lib/backend_placeholder/server.py | serve(host, port) function |
+| Docker build config | nix/docker.nix | dockerTools.buildImage |
+| CI/CD | .github/workflows/docs.yml | flake-based docker build + GHCR push |
+| Nix shell config | flake.nix | perSystem.devShell, shellApps.deploy-backend |
+
+## CONVENTIONS (Nix + FastAPI)
+- **2-space indentation** (strict), no trailing whitespace
+- **Imports**: stdlib → third-party → local; no blank lines between groups
+- **Type hints**: Required in signatures; use modern `dict[str, str]` not `Dict[str, str]`
+- **Nix env**: Use `nix develop` for dev shell; `nix run .#deploy-backend` for server
+- **Nix docker**: Build via `nix build .#docker` (no Dockerfile)
+- **Linting**: flake8 with custom ignores (E501, E111/E114/E117, E302/E305, E121/E261/E203, E731, W291/W293/W503)
+- **FastAPI**: APP constant naming; routes in api.py; __init__.py empty markers
+
+## ANTI-PATTERNS (THIS PROJECT)
+None explicitly documented in codebase comments.
+
+## UNIQUE STYLES
+- **Package layout**: lib/backend_placeholder/ (non-standard; typical is src/ or app/)
+- **API + server in same module**: Both in backend_placeholder package, not separated
+- **Nix-only env**: No venv/ - Nix provides isolation via dev shell
+- **CI docker from flake**: .github/workflows/docs.yml uses flake build for image, not Dockerfile
+
+## COMMANDS
+```bash
+nix develop              # Enter dev shell
+deploy-backend            # Run uvicorn on 0.0.0.0:8000
+nix run .#deploy-backend  # Same as above
+nix build .#docker        # Build docker image (dockerTools.buildImage)
+flake8 lib/               # Lint Python code
+```
+
+## NOTES
+- Tests not yet configured (lib/backend_placeholder/tests/ exists but empty)
+- CI publishes to ghcr.io/<owner-lower>/backend-placeholder on main/tags
+- dockerTools image name: backend-placeholder, tag: latest, port 8000/tcp
+- study-ontology overlay in flake.nix for knowledge graph schema models
 
 ### Environment Setup
 ```bash
