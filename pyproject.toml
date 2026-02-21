@@ -14,6 +14,7 @@ dependencies = [
   "pdfplumber",
   "fastapi",
   "uvicorn",
+  "pytest",
 ]
 name = "backend_placeholder"
 version = "1.0.0"

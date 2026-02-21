@@ -10,3 +10,5 @@
 *plans/
 *.duckdb
 *.env
+*testCanvas.py
+*anvasJsonFormat.json

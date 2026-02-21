@@ -19,6 +19,7 @@ final: prev: {
           langgraph
           python-dotenv
           pdfplumber
+          pytest
         ]);
         doCheck = false;
       };
