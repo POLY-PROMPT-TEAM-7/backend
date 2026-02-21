@@ -1,4 +1,4 @@
-from backend_placeholder.api import APP
+from lib.backend_placeholder.api import APP
 import uvicorn
 
 def serve(host: str = "0.0.0.0", port: int = 8000) -> None:
