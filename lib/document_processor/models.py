@@ -1,6 +1,6 @@
 """Pydantic models for structured document output."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 import uuid
 
@@ -34,13 +34,13 @@ class Page(BaseModel):
 class Document(BaseModel):
     """Complete structured document with processing metadata."""
 
-    document_id: str = Field(
-        default_factory=lambda: str(uuid.uuid4()),
+    document_id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
         description="Unique document identifier",
     )
     pages: List[Page] = Field(..., description="List of pages in the document")
     processing_time_ms: int = Field(..., description="Processing time in milliseconds")
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Timestamp when document was processed",
     )

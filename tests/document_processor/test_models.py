@@ -58,4 +58,4 @@ def test_document_creation():
 def test_document_default_id():
     """Document should generate UUID by default."""
     doc = Document(pages=[], processing_time_ms=100)
-    assert uuid.UUID(doc.document_id)
+    assert isinstance(doc.document_id, uuid.UUID)
