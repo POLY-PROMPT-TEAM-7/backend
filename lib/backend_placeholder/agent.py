@@ -16,73 +16,12 @@ from backend_placeholder.nodes.retry_flow import route_after_validate
 from backend_placeholder.nodes.schema_options import inject_graph_schema_options
 from backend_placeholder.nodes.validate_graph import validate_graph
 from backend_placeholder.state import KnowledgeExtractionState
-
-load_dotenv()
-
-llm: ChatOpenAI = ChatOpenAI(
-  model="gpt-4o",
-  api_key=SecretStr(os.environ["OPENAI_API_KEY"]),
-)
-
-
-class ExtractedGraphPayload(BaseModel):
-  entities: list[KnowledgeEntity]
-  relationships: list[KnowledgeRelationship]
-
-
-def _build_extraction_prompt(state: KnowledgeExtractionState) -> str:
-  schema_options: dict[str, Any] = state.get("graph_schema_options", {})
-  return (
-    "Extract a clean knowledge graph from this document text. "
-    "Return only entities and relationships that fit the allowed schema. "
-    f"Schema options: {schema_options}"
-  )
-
-
-def extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
-  extractor = llm.with_structured_output(ExtractedGraphPayload)
-  result: ExtractedGraphPayload = cast(
-    ExtractedGraphPayload,
-    extractor.invoke([
-      SystemMessage(content=_build_extraction_prompt(state)),
-      HumanMessage(content=state["textracted_text"]),
-    ]),
-  )
-  msg: str = (
-    f"[extract_graph] Extracted {len(result.entities)} entities "
-    f"and {len(result.relationships)} relationships."
-  )
-  return {
-    "raw_entities": result.entities,
-    "raw_relationships": result.relationships,
-    "processing_log": state.get("processing_log", []) + [msg],
-  }
-
-
-def retry_extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
-  schema_options: dict[str, Any] = state.get("graph_schema_options", {})
-  extractor = llm.with_structured_output(ExtractedGraphPayload)
-  result: ExtractedGraphPayload = cast(
-    ExtractedGraphPayload,
-    extractor.invoke([
-      SystemMessage(content=(
-        "Retry extraction and fix issues based on validation errors. "
-        f"Validation errors: {state.get('validation_errors', [])}. "
-        f"Use this schema options object: {schema_options}"
-      )),
-      HumanMessage(content=state["textracted_text"]),
-    ]),
-  )
-  next_retry_count: int = state.get("retry_count", 0) + 1
-  msg: str = f"[retry_extract_graph] Retry {next_retry_count} completed."
-  return {
-    "raw_entities": result.entities,
-    "raw_relationships": result.relationships,
-    "retry_count": next_retry_count,
-    "validation_errors": [],
-    "processing_log": state.get("processing_log", []) + [msg],
-  }
-
+from backend_placeholder.nodes.mkgraph import mkgraph
+from StudyOntology.lib import SourceDocument
+from langgraph.graph import StateGraph
+from langgraph.graph import START
+from langgraph.graph import END
+from typing import Any
 
 def build_pipeline() -> Any:
   graph: StateGraph = StateGraph(KnowledgeExtractionState)

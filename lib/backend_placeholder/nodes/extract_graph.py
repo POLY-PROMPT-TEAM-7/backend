@@ -1,25 +1,16 @@
 from backend_placeholder.state import KnowledgeExtractionState
-from StudyOntology.lib import KnowledgeRelationship
+from backend_placeholder.models import ExtractedGraphPayload
 from langchain_core.messages import SystemMessage
 from langchain_core.messages import HumanMessage
-from StudyOntology.lib import KnowledgeEntity
 from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
-from pydantic import BaseModel
 from typing import cast
 from typing import Any
 import os
-
-load_dotenv()
 
 LLM: ChatOpenAI = ChatOpenAI(
   model="gpt-4o",
   api_key=os.environ["OPENAI_API_KEY"]
 )
-
-class ExtractedGraphPayload(BaseModel):
-  entities: list[KnowledgeEntity]
-  relationships: list[KnowledgeRelationship]
 
 def build_extraction_prompt(schema_options: dict[str, Any]) -> str:
   return f"Extract a clean knowledge graph from this document text. Return only entities and relationships that fit the allowed schema. Schema options: {schema_options}" 
