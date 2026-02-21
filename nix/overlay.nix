@@ -11,10 +11,11 @@ final: prev: {
           wheel
         ];
         propagatedBuildInputs = (with pyFinal; [
-          study-ontology
           pydantic
           fastapi
           uvicorn
+        ]) ++ (with prev; [
+          python313Packages.study-ontology
         ]);
         doCheck = false;
       };

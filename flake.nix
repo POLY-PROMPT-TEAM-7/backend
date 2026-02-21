@@ -18,6 +18,7 @@
           ];
         };
         imports = [
+          ./nix/docker.nix
           ./nix/shell.nix
         ];
       };
