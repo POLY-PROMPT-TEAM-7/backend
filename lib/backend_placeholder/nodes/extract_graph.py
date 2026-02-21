@@ -8,9 +8,10 @@ from typing import cast
 from typing import Any
 import os
 
-load_dotenv()
-
-LLM: ChatOpenAI = ChatOpenAI(model="gpt-4o", api_key=os.environ["OPENAI_API_KEY"])
+LLM: ChatOpenAI = ChatOpenAI(
+  model="gpt-4o",
+  api_key=os.environ["OPENAI_API_KEY"]
+)
 
 def build_extraction_prompt(schema_options: dict[str, Any]) -> str:
   return f"Extract a clean knowledge graph from this document text. Return only entities and relationships that fit the allowed schema. Schema options: {schema_options}" 
