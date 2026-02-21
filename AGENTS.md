@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
 **Generated:** 2026-02-21
-**Commit:** docs-publish (added workflow for GHCR docker image builds)
+**Commit:** b27da408 (First Draft Of Agent After Cleanup)
 
 ## OVERVIEW
 FastAPI backend for KG Study Tool - knowledge graph extraction/visualization for course materials. Early development stage.
@@ -18,7 +18,13 @@ FastAPI backend for KG Study Tool - knowledge graph extraction/visualization for
 │   ├── __init__.py        # Package marker (empty)
 │   ├── api.py             # FastAPI app instance (APP) and routes
 │   ├── models.py          # Pydantic models
-│   └── server.py          # serve() -> uvicorn.run(APP)
+│   ├── agent.py           # LangGraph agent builder
+│   ├── state.py           # Agent state management
+│   └── server.py          # runner() -> uvicorn.run(APP)
+│   └── nodes/             # LangGraph workflow nodes (subpackage)
+│       ├── extract_graph.py      # Entity extraction node (GPT-4o)
+│       ├── mkgraph.py            # Graph construction node
+│       └── schema_options.py     # Schema injection node
 ├── nix/
 │   └── docker.nix          # dockerTools.buildImage, packages.docker output
 └── .github/workflows/
@@ -31,12 +37,17 @@ FastAPI backend for KG Study Tool - knowledge graph extraction/visualization for
 | FastAPI app instance | lib/backend_placeholder/api.py | APP: FastAPI = FastAPI() |
 | Routes/endpoints | lib/backend_placeholder/api.py | @APP.get("/") decorator pattern |
 | Pydantic models | lib/backend_placeholder/models.py | BaseModel inheritance |
-| Server entrypoint | lib/backend_placeholder/server.py | serve(host, port) function |
+| Agent workflow | lib/backend_placeholder/agent.py | LangGraph state graph builder |
+| Agent state | lib/backend_placeholder/state.py | AgentState TypedDict with messages, doc, graph |
+| Server entrypoint | lib/backend_placeholder/server.py | runner(host, port) function |
+| Schema injection | lib/backend_placeholder/nodes/schema_options.py | Builds entity/relationship schema options |
+| Entity extraction | lib/backend_placeholder/nodes/extract_graph.py | GPT-4o extraction with retry logic |
+| Graph construction | lib/backend_placeholder/nodes/mkgraph.py | KnowledgeGraph from entities/relationships |
 | Docker build config | nix/docker.nix | dockerTools.buildImage |
 | CI/CD | .github/workflows/docs.yml | flake-based docker build + GHCR push |
 | Nix shell config | flake.nix | perSystem.devShell, shellApps.deploy-backend |
 
-## CONVENTIONS (Nix + FastAPI)
+## CONVENTIONS (Nix + FastAPI + LangGraph)
 - **2-space indentation** (strict), no trailing whitespace
 - **Imports**: stdlib → third-party → local; no blank lines between groups
 - **Type hints**: Required in signatures; use modern `dict[str, str]` not `Dict[str, str]`
@@ -44,12 +55,14 @@ FastAPI backend for KG Study Tool - knowledge graph extraction/visualization for
 - **Nix docker**: Build via `nix build .#docker` (no Dockerfile)
 - **Linting**: flake8 with custom ignores (E501, E111/E114/E117, E302/E305, E121/E261/E203, E731, W291/W293/W503)
 - **FastAPI**: APP constant naming; routes in api.py; __init__.py empty markers
+- **LangGraph**: Stateful workflows; node functions update state and return dict
 
 ## ANTI-PATTERNS (THIS PROJECT)
 None explicitly documented in codebase comments.
 
 ## UNIQUE STYLES
 - **Package layout**: lib/backend_placeholder/ (non-standard; typical is src/ or app/)
+- **Nodes pattern**: nodes/ directory for LangGraph workflow modules (separate from package)
 - **API + server in same module**: Both in backend_placeholder package, not separated
 - **Nix-only env**: No venv/ - Nix provides isolation via dev shell
 - **CI docker from flake**: .github/workflows/docs.yml uses flake build for image, not Dockerfile
@@ -68,6 +81,7 @@ flake8 lib/               # Lint Python code
 - CI publishes to ghcr.io/<owner-lower>/backend-placeholder on main/tags
 - dockerTools image name: backend-placeholder, tag: latest, port 8000/tcp
 - study-ontology overlay in flake.nix for knowledge graph schema models
+- LangGraph for agent orchestration with state management
 
 ### Environment Setup
 ```bash
