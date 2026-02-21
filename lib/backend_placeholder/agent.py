@@ -6,7 +6,7 @@ from backend_placeholder.nodes.extract_graph import extract_graph
 from backend_placeholder.state import KnowledgeExtractionState
 from backend_placeholder.nodes.mkgraph import mkgraph
 from StudyOntology.lib import SourceDocument
-from langgrapgh.graph import StateGraph
+from langgraph.graph import StateGraph
 from langgraph.graph import START
 from langgraph.graph import END
 from typing import Any
