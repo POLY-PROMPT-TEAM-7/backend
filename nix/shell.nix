@@ -1,0 +1,17 @@
+{pkgs, lib, config, ...}: 
+let 
+  py = pkgs.python313Packages;
+in {
+  packages.default = py.tablassert;
+  devShells.default = pkgs.mkShell {
+    packages = (with py; [
+      backend-placeholder
+      tablassert
+      python
+      flake8
+      pip
+    ]) ++ (with pkgs; [
+      pyright
+    ]);
+  };
+}
