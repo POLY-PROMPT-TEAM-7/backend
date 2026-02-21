@@ -11,6 +11,7 @@ final: prev: {
           wheel
         ];
         propagatedBuildInputs = (with pyFinal; [
+          langgraph
           pydantic
           fastapi
           uvicorn
