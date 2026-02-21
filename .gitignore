@@ -10,3 +10,7 @@
 *plans/
 *.duckdb
 .worktrees/
+venv/
+.nix-ssh/
+result/
+.direnv/

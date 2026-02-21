@@ -42,6 +42,21 @@ Return structured JSON (pages, lines, metadata)
 
 ### 1. Install Dependencies
 
+**Using Nix (Recommended):**
+
+```bash
+cd backend
+nix develop
+```
+
+This will create a shell with all dependencies including:
+- Python 3.13
+- boto3, pydantic, fastapi, uvicorn, python-multipart
+- pytest, pytest-asyncio
+- Development tools: flake8, pyright
+
+**Using pip (Alternative):**
+
 ```bash
 cd backend
 pip install -e .
@@ -244,11 +259,31 @@ Edit `lib/document_processor/client.py` to customize:
 ### Running Tests with Coverage
 
 ```bash
-PYTHONPATH=. pytest tests/ --cov=lib --cov-report=html
+# Using nix (recommended)
+nix develop
+pytest tests/ --cov=lib --cov-report=html
 open htmlcov/index.html  # View coverage report
+
+# Using pip (alternative)
+PYTHONPATH=. pytest tests/ --cov=lib --cov-report=html
 ```
 
 ### Linting
+
+```bash
+# Using nix (recommended)
+nix develop
+ruff check lib/ tests/
+ruff format lib/ tests/
+
+# Using pyright
+nix develop
+pyright lib/
+
+# Using pip (alternative)
+ruff check lib/ tests/
+ruff format lib/ tests/
+```
 
 ```bash
 # Using ruff (recommended)
@@ -306,8 +341,10 @@ See [AWS Textract Pricing](https://aws.amazon.com/textract/pricing/) for details
 
 ### Docker Deployment
 
+**Using pip:**
+
 ```dockerfile
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 COPY backend/ .
@@ -318,6 +355,23 @@ RUN pip install uvicorn
 EXPOSE 8000
 
 CMD ["uvicorn", "lib.backend_placeholder.api:APP", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**Using Nix:**
+
+```dockerfile
+FROM nixos/nix:latest
+
+WORKDIR /app
+COPY backend/ .
+
+RUN nix-channel --update && nix-env -iA nixpkgs.nixFlakes
+RUN nix shell nixpkgs#python3 -c "python -m venv venv"
+RUN . venv/bin/activate && pip install uvicorn
+
+EXPOSE 8000
+
+CMD ["nix", "develop", "-c", "uvicorn", "lib.backend_placeholder.api:APP", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 ### CloudFormation/Terraform

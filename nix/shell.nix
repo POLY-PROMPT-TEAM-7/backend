@@ -7,6 +7,8 @@ in {
     packages = (with py; [
       backend-placeholder
       python
+      pytest
+      pytest-asyncio
       flake8
       pip
     ]) ++ (with pkgs; [

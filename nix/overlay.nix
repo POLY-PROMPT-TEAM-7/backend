@@ -11,9 +11,11 @@ final: prev: {
           wheel
         ];
         propagatedBuildInputs = (with pyFinal; [
+          boto3
           pydantic
           fastapi
           uvicorn
+          python-multipart
         ]);
         doCheck = false;
       };
