@@ -1,4 +1,7 @@
+from StudyOntology.lib import KnowledgeRelationship
+from StudyOntology.lib import KnowledgeEntity
 from pydantic import BaseModel
 
-class Placeholder(BaseModel):
-  Placeholder: str
+class ExtractedGraphPayload(BaseModel):
+  entities: list[KnowledgeEntity]
+  relationships: list[KnowledgeRelationship]
