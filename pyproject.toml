@@ -23,4 +23,4 @@ requires-python = ">=3.13"
 where = ["lib"]
 
 [project.scripts]
-deploy-backend = "backend_placeholder.server:serve"
+deploy-backend = "backend_placeholder.server:runner"

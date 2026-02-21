@@ -1,5 +1,5 @@
 *CLAUDE.md
-*AGENTS.md
+*SCOPE.md
 *.claude/
 *.sisyphus/
 *.opencode/
@@ -10,3 +10,5 @@
 *plans/
 *.duckdb
 *.env
+*result/
+*result

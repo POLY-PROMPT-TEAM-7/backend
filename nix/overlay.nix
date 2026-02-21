@@ -11,14 +11,15 @@ final: prev: {
           wheel
         ];
         propagatedBuildInputs = (with pyFinal; [
+          langchain-openai
+          python-dotenv
+          langchain
+          langgraph
           pydantic
           fastapi
           uvicorn
-          langchain-core
-          langchain-openai
-          langgraph
-          python-dotenv
-          pdfplumber
+        ]) ++ (with prev; [
+          python313Packages.study-ontology
         ]);
         doCheck = false;
       };
