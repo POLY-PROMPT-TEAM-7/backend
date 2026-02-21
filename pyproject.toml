@@ -14,6 +14,7 @@ dependencies = [
   "boto3>=1.34.0",
   "pydantic",
   "fastapi",
+  "pytest-asyncio",
 ]
 
 [tool.setuptools.packages.find]
