@@ -7,7 +7,7 @@ from typing import TypedDict
 from typing import Optional
 from typing import Any
 
-class KnowledgeExtractiobhState(TypedDict):
+class KnowledgeExtractionState(TypedDict):
   filename: str
   document_type: str
   textracted_text: str

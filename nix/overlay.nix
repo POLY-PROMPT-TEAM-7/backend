@@ -12,6 +12,7 @@ final: prev: {
         ];
         propagatedBuildInputs = (with pyFinal; [
           langchain-openai
+          python-dotenv
           langchain
           langgraph
           pydantic
