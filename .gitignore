@@ -14,3 +14,4 @@ venv/
 .nix-ssh/
 result/
 .direnv/
+.env
