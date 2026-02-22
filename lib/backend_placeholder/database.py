@@ -18,7 +18,6 @@ from backend_placeholder.models import SourceRecord
 
 DB_PATH: Path = Path("/tmp/knowledge.duckdb")
 
-
 def initialize_db(db_path: Path = DB_PATH) -> None:
   con = duckdb.connect(db_path)
   try:
@@ -115,7 +114,6 @@ def initialize_db(db_path: Path = DB_PATH) -> None:
   finally:
     con.close()
 
-
 def add_data_to_db(kg: KnowledgeGraph, db_path: Path = DB_PATH) -> None:
   con = duckdb.connect(db_path)
   try:
@@ -170,11 +168,9 @@ def add_data_to_db(kg: KnowledgeGraph, db_path: Path = DB_PATH) -> None:
   finally:
     con.close()
 
-
 def populate_db(kg: KnowledgeGraph, db_path: Path = DB_PATH) -> None:
   initialize_db(db_path)
   add_data_to_db(kg, db_path)
-
 
 def count_entities(db_path: Path = DB_PATH) -> int:
   con = duckdb.connect(db_path)
@@ -184,7 +180,6 @@ def count_entities(db_path: Path = DB_PATH) -> int:
   finally:
     con.close()
 
-
 def count_relationships(db_path: Path = DB_PATH) -> int:
   con = duckdb.connect(db_path)
   try:
@@ -192,7 +187,6 @@ def count_relationships(db_path: Path = DB_PATH) -> int:
     return int(row[0]) if row else 0
   finally:
     con.close()
-
 
 def get_processed_artifact(artifact_path: str, artifact_sha256: str, db_path: Path = DB_PATH) -> dict[str, Any] | None:
   con = duckdb.connect(db_path)
@@ -213,7 +207,6 @@ def get_processed_artifact(artifact_path: str, artifact_sha256: str, db_path: Pa
   finally:
     con.close()
 
-
 def mark_artifact_processed(artifact_path: str, artifact_sha256: str, source_id: str, source_name: str, db_path: Path = DB_PATH) -> None:
   con = duckdb.connect(db_path)
   try:
@@ -224,7 +217,6 @@ def mark_artifact_processed(artifact_path: str, artifact_sha256: str, source_id:
   finally:
     con.close()
 
-
 def _loads_json(value: str) -> dict[str, Any]:
   try:
     loaded = json.loads(value)
@@ -233,7 +225,6 @@ def _loads_json(value: str) -> dict[str, Any]:
     return {}
   except Exception:
     return {}
-
 
 def _collect_source_ids(value: Any, bucket: set[str]) -> None:
   if value is None:
@@ -262,12 +253,10 @@ def _collect_source_ids(value: Any, bucket: set[str]) -> None:
     if "provenance" in value:
       _collect_source_ids(value.get("provenance"), bucket)
 
-
 def _source_ids_from_payload(payload: dict[str, Any]) -> set[str]:
   bucket: set[str] = set()
   _collect_source_ids(payload, bucket)
   return bucket
-
 
 def _relationship_record_from_row(row: tuple[Any, ...]) -> RelationshipRecord:
   payload = _loads_json(str(row[3]))
@@ -279,7 +268,6 @@ def _relationship_record_from_row(row: tuple[Any, ...]) -> RelationshipRecord:
     data=payload,
   )
 
-
 def _entity_record_from_row(row: tuple[Any, ...]) -> EntityRecord:
   payload = _loads_json(str(row[2]))
   return EntityRecord(
@@ -289,7 +277,6 @@ def _entity_record_from_row(row: tuple[Any, ...]) -> EntityRecord:
     data=payload,
   )
 
-
 def _source_record_from_row(row: tuple[Any, ...]) -> SourceRecord:
   payload = _loads_json(str(row[2]))
   return SourceRecord(
@@ -297,7 +284,6 @@ def _source_record_from_row(row: tuple[Any, ...]) -> SourceRecord:
     source_name=str(row[1]),
     data=payload,
   )
-
 
 def _fetch_entities_by_ids(entity_ids: set[str], db_path: Path = DB_PATH) -> list[EntityRecord]:
   if not entity_ids:
@@ -313,7 +299,6 @@ def _fetch_entities_by_ids(entity_ids: set[str], db_path: Path = DB_PATH) -> lis
   finally:
     con.close()
 
-
 def _fetch_sources_by_ids(source_ids: set[str], db_path: Path = DB_PATH) -> list[SourceRecord]:
   if not source_ids:
     return []
@@ -327,7 +312,6 @@ def _fetch_sources_by_ids(source_ids: set[str], db_path: Path = DB_PATH) -> list
     return [_source_record_from_row(row) for row in rows]
   finally:
     con.close()
-
 
 def list_relationships_by_confidence(
   limit: int,
@@ -356,7 +340,6 @@ def list_relationships_by_confidence(
     return ([_relationship_record_from_row(row) for row in rows], total)
   finally:
     con.close()
-
 
 def _graph_response_from_relationships(
   relationships: list[RelationshipRecord],
@@ -389,7 +372,6 @@ def _graph_response_from_relationships(
     limit=limit,
     offset=offset,
   )
-
 
 def get_subgraph_by_source_ids(source_ids: list[str], limit: int, offset: int, db_path: Path = DB_PATH) -> GraphSubgraphResponse:
   source_set = {x for x in source_ids if x}
@@ -430,10 +412,8 @@ def get_subgraph_by_source_ids(source_ids: list[str], limit: int, offset: int, d
     db_path=db_path,
   )
 
-
 def get_subgraph_by_source_id(source_id: str, limit: int, offset: int, db_path: Path = DB_PATH) -> GraphSubgraphResponse:
   return get_subgraph_by_source_ids(source_ids=[source_id], limit=limit, offset=offset, db_path=db_path)
-
 
 def get_subgraph_by_entity(entity_id_or_name: str, limit: int, offset: int, db_path: Path = DB_PATH) -> GraphSubgraphResponse:
   con = duckdb.connect(db_path)
@@ -479,7 +459,6 @@ def get_subgraph_by_entity(entity_id_or_name: str, limit: int, offset: int, db_p
     db_path=db_path,
   )
 
-
 def get_subgraph_by_relationship_type(
   relationship_type: str,
   limit: int,
@@ -505,7 +484,6 @@ def get_subgraph_by_relationship_type(
     offset=offset,
     db_path=db_path,
   )
-
 
 def get_subgraph_by_entity_types(
   entity_types: list[str],
