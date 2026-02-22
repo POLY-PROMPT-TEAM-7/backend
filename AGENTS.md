@@ -105,14 +105,6 @@ flake8 lib/          # Run linting on source code
 nix build .#backend-placeholder    # Build the Python package
 ```
 
-### Testing
-Tests not yet configured. When adding tests, place them in `lib/backend_placeholder/tests/` and run:
-```bash
-pytest lib/backend_placeholder/tests/ -v                      # Run all tests
-pytest lib/backend_placeholder/tests/test_module.py -v        # Run single test file
-pytest lib/backend_placeholder/tests/test_module.py::test_func -v  # Run single test
-```
-
 ---
 
 ## Code Style Guidelines
