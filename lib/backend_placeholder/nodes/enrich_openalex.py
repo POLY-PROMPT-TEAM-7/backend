@@ -1,45 +1,35 @@
 from backend_placeholder.state import KnowledgeExtractionState
-from StudyOntology.lib import Concept
-from StudyOntology.lib import ExtractionProvenance
-from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import KnowledgeRelationship
+from StudyOntology.lib import ExtractionProvenance
 from StudyOntology.lib import RelationshipType
+from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import SourceDocument
-from typing import Any
+from StudyOntology.lib import Concept
 from typing import Optional
+from typing import Any
 import httpx
 import os
 
-OPENALEX_BASE: str = "https://api.openalex.org"
+BASE_URL: str = "https://api.openalex.org"
+API_KEY: str = os.environ["OPENALEX_API_KEY"]
 
-
-def _headers() -> dict[str, str]:
-  return {"User-Agent": "KGStudyTool/1.0"}
-
-
-def _api_key() -> str:
-  return os.environ.get("OPENALEX_API_KEY", "")
-
-
-def _make_provenance(concept_name: str) -> ExtractionProvenance:
+def make_provenance(concept_name: str) -> ExtractionProvenance:
   return ExtractionProvenance(
     source_document=f"openalex:source:{concept_name.lower().replace(' ', '_')}",
     extraction_method="OpenAlex API enrichment",
     raw_text=f"Enriched from OpenAlex knowledge graph for concept: {concept_name}"
   )
 
+TIMEOUT: float = 30.0
+HEADERS: dict[str, str] = {"User-Agent": "KGStudyTool/1.0"}
 
-def _search_openalex_concept(name: str) -> Optional[dict[str, Any]]:
+def search_openalex_concept(name: str) -> Optional[dict[str, Any]]:
   try:
     resp: httpx.Response = httpx.get(
-      f"{OPENALEX_BASE}/concepts",
-      params={
-        "search": name,
-        "per-page": 1,
-        "api_key": _api_key()
-      },
-      headers=_headers(),
-      timeout=10.0
+      f"{BASE_URL}/concepts",
+      params={"search": name, "per-page": 1, "api_key": API_KEY},
+      headers=HEADERS,
+      timeout=TIMEOUT
     )
     resp.raise_for_status()
     results: list[dict[str, Any]] = resp.json().get("results", [])
@@ -47,41 +37,34 @@ def _search_openalex_concept(name: str) -> Optional[dict[str, Any]]:
   except Exception:
     return None
 
-
-def _get_top_papers(
+def get_top_papers(
   openalex_concept_id: str,
   limit: int = 3
 ) -> list[dict[str, Any]]:
   try:
     resp: httpx.Response = httpx.get(
-      f"{OPENALEX_BASE}/works",
-      params={
-        "filter": f"concepts.id:{openalex_concept_id}",
-        "sort": "cited_by_count:desc",
-        "per-page": limit,
-        "api_key": _api_key()
-      },
-      headers=_headers(),
-      timeout=10.0
+      f"{BASE_URL}/works",
+      params={"filter": f"concepts.id:{openalex_concept_id}", "sort": "cited_by_count:desc", "per-page": limit, "api_key": API_KEY},
+      headers=HEADERS,
+      timeout=TIMEOUT
     )
     resp.raise_for_status()
     return resp.json().get("results", [])
   except Exception:
     return []
 
-
-def _enrich_single_concept(
+def enrich_single_concept(
   entity: Concept
 ) -> tuple[list[KnowledgeEntity], list[KnowledgeRelationship]]:
   new_entities: list[KnowledgeEntity] = []
   new_relationships: list[KnowledgeRelationship] = []
 
-  oa_concept: Optional[dict[str, Any]] = _search_openalex_concept(entity.name)
+  oa_concept: Optional[dict[str, Any]] = search_openalex_concept(entity.name)
   if oa_concept is None:
     return new_entities, new_relationships
 
   oa_id: str = oa_concept["id"]
-  provenance: ExtractionProvenance = _make_provenance(entity.name)
+  provenance: ExtractionProvenance = make_provenance(entity.name)
 
   ancestor: dict[str, Any]
   for ancestor in (oa_concept.get("ancestors") or []):
@@ -132,7 +115,7 @@ def _enrich_single_concept(
     )
 
   paper: dict[str, Any]
-  for paper in _get_top_papers(oa_id):
+  for paper in get_top_papers(oa_id):
     title: str = paper.get("display_name") or "Untitled Paper"
     doi: str = paper.get("doi") or paper.get("id", "")
     paper_short_id: str = paper["id"].split("/")[-1]
@@ -159,14 +142,11 @@ def _enrich_single_concept(
 
   return new_entities, new_relationships
 
-
 def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
   raw_entities: list[KnowledgeEntity] = state.get("raw_entities", [])
   raw_relationships: list[KnowledgeRelationship] = state.get("raw_relationships", [])
 
-  concepts_to_enrich: list[Concept] = [
-    e for e in raw_entities if isinstance(e, Concept)
-  ]
+  concepts_to_enrich: list[Concept] = [e for e in raw_entities if isinstance(e, Concept)]
 
   all_new_entities: list[KnowledgeEntity] = []
   all_new_relationships: list[KnowledgeRelationship] = []
@@ -175,23 +155,17 @@ def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
   for concept in concepts_to_enrich:
     new_entities: list[KnowledgeEntity]
     new_relationships: list[KnowledgeRelationship]
-    new_entities, new_relationships = _enrich_single_concept(concept)
+    new_entities, new_relationships = enrich_single_concept(concept)
     all_new_entities.extend(new_entities)
     all_new_relationships.extend(new_relationships)
 
   existing_ids: set[str] = {e.id for e in raw_entities}
-  deduped_new_entities: list[KnowledgeEntity] = [
-    e for e in all_new_entities if e.id not in existing_ids
-  ]
+  deduped_new_entities: list[KnowledgeEntity] = [e for e in all_new_entities if e.id not in existing_ids]
 
   merged_entities: list[KnowledgeEntity] = raw_entities + deduped_new_entities
   merged_relationships: list[KnowledgeRelationship] = raw_relationships + all_new_relationships
 
-  log_msg: str = (
-    f"[enrich_with_openalex] Enriched {len(concepts_to_enrich)} concepts. "
-    f"Added {len(deduped_new_entities)} new entities "
-    f"and {len(all_new_relationships)} new relationships."
-  )
+  log_msg: str = f"[enrich_with_openalex] Enriched {len(concepts_to_enrich)} concepts. Added {len(deduped_new_entities)} new entities and {len(all_new_relationships)} new relationships."
 
   return {
     "raw_entities": merged_entities,

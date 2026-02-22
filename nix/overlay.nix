@@ -18,6 +18,7 @@ final: prev: {
           pydantic
           fastapi
           uvicorn
+          httpx
         ]) ++ (with prev; [
           python313Packages.study-ontology
         ]);
