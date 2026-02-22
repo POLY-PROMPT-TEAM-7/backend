@@ -12,7 +12,9 @@ import httpx
 import os
 
 BASE_URL: str = "https://api.openalex.org"
-API_KEY: str = os.getenv("OPENALEX_API_KEY", "")
+
+def get_openalex_api_key() -> str:
+  return os.getenv("OPENALEX_API_KEY", "")
 
 def make_provenance(concept_name: str) -> ExtractionProvenance:
   return ExtractionProvenance(
@@ -25,10 +27,11 @@ TIMEOUT: float = 30.0
 HEADERS: dict[str, str] = {"User-Agent": "KGStudyTool/1.0"}
 
 def search_openalex_concept(name: str) -> Optional[dict[str, Any]]:
+  api_key: str = get_openalex_api_key()
   try:
     resp: httpx.Response = httpx.get(
       f"{BASE_URL}/concepts",
-      params={"search": name, "per-page": 1, "api_key": API_KEY},
+      params={"search": name, "per-page": 1, "api_key": api_key},
       headers=HEADERS,
       timeout=TIMEOUT
     )
@@ -42,10 +45,11 @@ def get_top_papers(
   openalex_concept_id: str,
   limit: int = 3
 ) -> list[dict[str, Any]]:
+  api_key: str = get_openalex_api_key()
   try:
     resp: httpx.Response = httpx.get(
       f"{BASE_URL}/works",
-      params={"filter": f"concepts.id:{openalex_concept_id}", "sort": "cited_by_count:desc", "per-page": limit, "api_key": API_KEY},
+      params={"filter": f"concepts.id:{openalex_concept_id}", "sort": "cited_by_count:desc", "per-page": limit, "api_key": api_key},
       headers=HEADERS,
       timeout=TIMEOUT
     )
@@ -144,7 +148,17 @@ def enrich_single_concept(
   return new_entities, new_relationships
 
 def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
-  if API_KEY == "":
+  # Skip enrichment if OpenAlex flag is disabled
+  if not state.get("query_openalex", False):
+    return {
+      "raw_entities": state.get("raw_entities", []),
+      "raw_relationships": state.get("raw_relationships", []),
+      "enriched_entities": state.get("enriched_entities", []),
+      "enriched_relationships": state.get("enriched_relationships", []),
+      "processing_log": state.get("processing_log", [])
+    }
+  # Graceful degradation: skip if API key missing or request fails
+  if get_openalex_api_key() == "":
     return {
       "raw_entities": state.get("raw_entities", []),
       "raw_relationships": state.get("raw_relationships", []),
@@ -176,14 +190,12 @@ def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
     merged_entities: list[Any] = raw_entities + deduped_new_entities
     merged_relationships: list[KnowledgeRelationship] = raw_relationships + all_new_relationships
 
-    log_msg: str = f"[enrich_with_openalex] Enriched {len(concepts_to_enrich)} concepts. Added {len(deduped_new_entities)} new entities and {len(all_new_relationships)} new relationships."
-
     return {
       "raw_entities": merged_entities,
       "raw_relationships": merged_relationships,
       "enriched_entities": deduped_new_entities,
       "enriched_relationships": all_new_relationships,
-      "processing_log": state.get("processing_log", []) + [log_msg]
+      "processing_log": state.get("processing_log", [])
     }
   except Exception:
     return {

@@ -1,5 +1,6 @@
 from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import KnowledgeEntity
+from StudyOntology.lib import KnowledgeGraph
 from StudyOntology.lib import SourceDocument
 from StudyOntology.lib import Assignment
 from typing import TypedDict
@@ -30,7 +31,7 @@ class KnowledgeExtractionState(TypedDict):
   validation_errors: list[str]
   retry_count: int
 
-  knowledge_graph: Optional[dict[str, Any]]
+  knowledge_graph: Optional[KnowledgeGraph]
   graph_stats: dict[str, Any]
   graph_schema_options: dict[str, Any]
 

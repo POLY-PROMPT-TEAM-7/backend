@@ -50,6 +50,13 @@ def canvas_node(state: dict) -> dict:
   """
   LangGraph node: fetch Canvas courses and assignments, store in state.
   """
+  # Graceful degradation: skip if API key missing or request fails
+  if not state.get("query_canvas", False):
+    return {
+      "canvas_courses": state.get("canvas_courses", []),
+      "canvas_assignments": state.get("canvas_assignments", []),
+      "processing_log": state.get("processing_log", [])
+    }
   if get_canvas_api_key() == "":
     return {
       "canvas_courses": [],
@@ -64,8 +71,8 @@ def canvas_node(state: dict) -> dict:
 
     return {
       "canvas_courses": active_courses,
-      "canvas_assignments": [a.model_dump() for a in assignments],
-      "processing_log": state.get("processing_log", []) + [f"Fetched {len(active_courses)} courses and {len(assignments)} assignments from Canvas"]
+      "canvas_assignments": assignments,
+      "processing_log": state.get("processing_log", [])
     }
   except Exception:
     return {
