@@ -84,12 +84,73 @@ FastAPI backend for the KG Study Tool. LangGraph pipeline extracts entities/rela
 
 ## COMMANDS
 ```bash
+# Enter dev shell
 nix develop
+
+# Run server
 deploy-backend
+# OR
 nix run .#deploy-backend
-nix build .#docker
+
+# Lint
 flake8 lib/
+
+# Build docker image
+nix build .#docker
+
+# Run single test (not configured)
+# Tests not configured - no pytest/tox setup
 ```
+
+## CODE STYLE GUIDELINES
+
+### Imports
+- Group imports by library: external package imports first, then internal package imports
+- Use explicit imports: `from package import specific_name` (avoid `from package import *`)
+- Standard library imports can come after third-party imports
+
+### Formatting
+- Line length: 320 characters (ruff config, though ruff is disabled)
+- Indentation: 2 spaces
+- Blank lines between functions and logical sections
+- No trailing whitespace
+
+### Types
+- Use type hints on all function signatures and return types
+- Modern Python syntax: `dict[str, Any]`, `list[str]`, `set[str]` (not `Dict`, `List`, `Set`)
+- Use `Optional[Type]` for nullable types
+- Use `cast()` when type narrowing is needed
+
+### Naming Conventions
+- Constants: UPPER_SNAKE_CASE (`MAX_COMPRESSED_BYTES`, `DEFAULT_LIMIT`, `APP`, `PIPELINE`)
+- Functions: snake_case (`ingest_upload`, `extract_graph`, `validate_graph`)
+- Classes: PascalCase (`ServiceError`, `ExtractRequest`, `KnowledgeGraph`)
+- Private functions: leading underscore (`_raise_http_error`)
+- Pydantic models: PascalCase with descriptive names
+
+### Error Handling
+- Raise `ServiceError(status_code, error_code, message)` for domain/expected failures
+- API layer catches `ServiceError` and translates to `HTTPException` with structured detail
+- Catch `ValidationError` from Pydantic and translate to 422 responses
+- LangGraph nodes: append to `validation_errors[]` list instead of raising exceptions
+- Nodes: append to `processing_log[]` for audit trail
+- Never mutate state in place; return partial updates as dicts
+
+### LangGraph Node Patterns
+- Signature: `def node_name(state: KnowledgeExtractionState) -> dict[str, Any]`
+- Return partial state dict (only updated fields, not full state)
+- Always access state via `.get(key, default)` for safety
+- Accumulate errors and continue pipeline (don't stop on validation failures)
+
+### Pydantic Models
+- Inherit from `BaseModel`
+- Use `Field()` with constraints (`ge`, `le`, `min_length`, `max_length`)
+- Validators: `@field_validator` (single field) or `@model_validator` (multiple fields)
+- Default values: `= None` for optional fields, `= Field(default=value)` for required
+
+### Logging
+- Pipeline: append messages to `processing_log[]` with prefix like `[extract_graph]`
+- Print statements for pipeline progress with context (filename, entity count)
 
 ## NOTES
 - Tests not configured (no pytest/tox config)

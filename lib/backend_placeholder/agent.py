@@ -100,6 +100,10 @@ def process_document(
 ) -> KnowledgeGraph:
   # Pipeline entry point - returns Pydantic KnowledgeGraph
   """Run the full extraction pipeline on a document."""
+  print(
+    "[pipeline] start "
+    f"filename={filename} query_canvas={query_canvas} query_openalex={query_openalex}"
+  )
   initial_state: dict[str, Any] = {
     "filename": filename,
     "document_type": "",
@@ -122,8 +126,17 @@ def process_document(
     "processing_log": [f"Started processing: {filename}"]
   }
   result: KnowledgeExtractionState = cast(KnowledgeExtractionState, PIPELINE.invoke(initial_state))
+  processing_log: list[str] = cast(list[str], result.get("processing_log", []))
+  if processing_log:
+    print(f"[pipeline] done filename={filename} final_stage={processing_log[-1]}")
+
   knowledge_graph: Optional[KnowledgeGraph] = cast(Optional[KnowledgeGraph], result["knowledge_graph"])
   if knowledge_graph is None:
+    validation_errors: list[str] = cast(list[str], result.get("validation_errors", []))
+    print(
+      "[pipeline] empty_graph "
+      f"filename={filename} validation_errors={len(validation_errors)}"
+    )
     return KnowledgeGraph(
       concepts=[],
       theories=[],
@@ -133,4 +146,18 @@ def process_document(
       relationships=[],
       source_documents=[]
     )
+
+  total_entities: int = (
+    len(knowledge_graph.concepts)
+    + len(knowledge_graph.theories)
+    + len(knowledge_graph.persons)
+    + len(knowledge_graph.methods)
+    + len(knowledge_graph.assignments)
+    + len(knowledge_graph.source_documents)
+  )
+  print(
+    "[pipeline] output "
+    f"filename={filename} entities={total_entities} "
+    f"relationships={len(knowledge_graph.relationships)}"
+  )
   return knowledge_graph

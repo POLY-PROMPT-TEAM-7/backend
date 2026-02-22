@@ -17,8 +17,7 @@ def _coerce_entities(values: list[Any], klass: type[Any], class_name: str) -> li
     if isinstance(value, klass):
       result.append(value)
       continue
-    if value.__class__.__name__ != class_name:
-      continue
+
     payload: Any = None
     if isinstance(value, dict):
       payload = value
@@ -27,6 +26,10 @@ def _coerce_entities(values: list[Any], klass: type[Any], class_name: str) -> li
         payload = value.model_dump()
       except Exception:
         payload = None
+
+    if payload is None and value.__class__.__name__ != class_name:
+      continue
+
     if not isinstance(payload, dict):
       continue
     try:
@@ -35,9 +38,38 @@ def _coerce_entities(values: list[Any], klass: type[Any], class_name: str) -> li
       continue
   return result
 
+def _coerce_relationships(values: list[Any]) -> tuple[list[KnowledgeRelationship], int]:
+  result: list[KnowledgeRelationship] = []
+  skipped_uncoercible: int = 0
+  for value in values:
+    if isinstance(value, KnowledgeRelationship):
+      result.append(value)
+      continue
+
+    payload: Any = None
+    if isinstance(value, dict):
+      payload = value
+    elif hasattr(value, "model_dump"):
+      try:
+        payload = value.model_dump()
+      except Exception:
+        payload = None
+
+    if not isinstance(payload, dict):
+      skipped_uncoercible += 1
+      continue
+
+    try:
+      result.append(KnowledgeRelationship(**payload))
+    except Exception:
+      skipped_uncoercible += 1
+      continue
+
+  return result, skipped_uncoercible
+
 def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   entities: list[KnowledgeEntity] = state.get("raw_entities", [])
-  relationships: list[KnowledgeRelationship] = state.get("raw_relationships", [])
+  raw_relationships: list[Any] = state.get("raw_relationships", [])
   state_assignments: list[Any] = state.get("canvas_assignments", [])
   state_source_document: Any = state.get("source_document", None)
 
@@ -63,6 +95,19 @@ def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   if isinstance(state_source_document, SourceDocument):
     source_documents = source_documents + [state_source_document]
 
+  entity_ids: set[str] = set(x.id for x in concepts + theories + persons + methods)
+  entity_ids.update(assignment_by_id.keys())
+  entity_ids.update(x.id for x in source_documents)
+
+  relationship_models, skipped_uncoercible = _coerce_relationships(raw_relationships)
+  relationships: list[KnowledgeRelationship] = []
+  skipped_missing_endpoint: int = 0
+  for rel in relationship_models:
+    if rel.subject in entity_ids and rel.object in entity_ids:
+      relationships.append(rel)
+    else:
+      skipped_missing_endpoint += 1
+
   graph_object: KnowledgeGraph = KnowledgeGraph(
     concepts=concepts,
     theories=theories,
@@ -74,7 +119,13 @@ def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   )
 
   try:
-    msg: str = f"[mkgraph] Built KnowledgeGraph with {len(entities)} entities, {len(relationships)} relationships"
+    msg: str = (
+      "[mkgraph] Built KnowledgeGraph "
+      f"raw_entities={len(entities)} materialized_entities={len(entity_ids)} "
+      f"raw_relationships={len(raw_relationships)} kept_relationships={len(relationships)} "
+      f"skipped_missing_endpoint={skipped_missing_endpoint} skipped_uncoercible={skipped_uncoercible}"
+    )
+    print(msg)
     return {
       "knowledge_graph": graph_object,
       "validation_errors": [],

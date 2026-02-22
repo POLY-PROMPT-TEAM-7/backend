@@ -43,6 +43,7 @@ def validate_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
       ]
 
   msg: str = f"[validate_graph] Checked {len(entities)} entities, {len(relationships)} relationships. Found {len(errors)} errors."
+  print(msg)
   return {
     "validation_errors": errors,
     "processing_log": state.get("processing_log", []) + [msg]
