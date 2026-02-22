@@ -4,6 +4,7 @@ from StudyOntology.lib import ExtractionProvenance
 from StudyOntology.lib import RelationshipType
 from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import SourceDocument
+from StudyOntology.lib import DocumentOrigin
 from StudyOntology.lib import Concept
 from typing import Optional
 from typing import Any
@@ -11,7 +12,9 @@ import httpx
 import os
 
 BASE_URL: str = "https://api.openalex.org"
-API_KEY: str = os.environ["OPENALEX_API_KEY"]
+
+def get_openalex_api_key() -> str:
+  return os.getenv("OPENALEX_API_KEY", "")
 
 def make_provenance(concept_name: str) -> ExtractionProvenance:
   return ExtractionProvenance(
@@ -24,10 +27,11 @@ TIMEOUT: float = 30.0
 HEADERS: dict[str, str] = {"User-Agent": "KGStudyTool/1.0"}
 
 def search_openalex_concept(name: str) -> Optional[dict[str, Any]]:
+  api_key: str = get_openalex_api_key()
   try:
     resp: httpx.Response = httpx.get(
       f"{BASE_URL}/concepts",
-      params={"search": name, "per-page": 1, "api_key": API_KEY},
+      params={"search": name, "per-page": 1, "api_key": api_key},
       headers=HEADERS,
       timeout=TIMEOUT
     )
@@ -41,10 +45,11 @@ def get_top_papers(
   openalex_concept_id: str,
   limit: int = 3
 ) -> list[dict[str, Any]]:
+  api_key: str = get_openalex_api_key()
   try:
     resp: httpx.Response = httpx.get(
       f"{BASE_URL}/works",
-      params={"filter": f"concepts.id:{openalex_concept_id}", "sort": "cited_by_count:desc", "per-page": limit, "api_key": API_KEY},
+      params={"filter": f"concepts.id:{openalex_concept_id}", "sort": "cited_by_count:desc", "per-page": limit, "api_key": api_key},
       headers=HEADERS,
       timeout=TIMEOUT
     )
@@ -55,8 +60,8 @@ def get_top_papers(
 
 def enrich_single_concept(
   entity: Concept
-) -> tuple[list[KnowledgeEntity], list[KnowledgeRelationship]]:
-  new_entities: list[KnowledgeEntity] = []
+) -> tuple[list[Any], list[KnowledgeRelationship]]:
+  new_entities: list[Any] = []
   new_relationships: list[KnowledgeRelationship] = []
 
   oa_concept: Optional[dict[str, Any]] = search_openalex_concept(entity.name)
@@ -125,7 +130,7 @@ def enrich_single_concept(
       name=title,
       description=f"Academic paper cited {cited_by} times. Source: OpenAlex.",
       document_type="academic_paper",
-      origin="WEB_SCRAPE",
+      origin=DocumentOrigin.WEB_SCRAPE,
       file_path=doi
     )
     new_entities.append(paper_doc)
@@ -143,34 +148,60 @@ def enrich_single_concept(
   return new_entities, new_relationships
 
 def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
-  raw_entities: list[KnowledgeEntity] = state.get("raw_entities", [])
-  raw_relationships: list[KnowledgeRelationship] = state.get("raw_relationships", [])
+  # Skip enrichment if OpenAlex flag is disabled
+  if not state.get("query_openalex", False):
+    return {
+      "raw_entities": state.get("raw_entities", []),
+      "raw_relationships": state.get("raw_relationships", []),
+      "enriched_entities": state.get("enriched_entities", []),
+      "enriched_relationships": state.get("enriched_relationships", []),
+      "processing_log": state.get("processing_log", [])
+    }
+  # Graceful degradation: skip if API key missing or request fails
+  if get_openalex_api_key() == "":
+    return {
+      "raw_entities": state.get("raw_entities", []),
+      "raw_relationships": state.get("raw_relationships", []),
+      "enriched_entities": state.get("enriched_entities", []),
+      "enriched_relationships": state.get("enriched_relationships", []),
+      "processing_log": state.get("processing_log", [])
+    }
 
-  concepts_to_enrich: list[Concept] = [e for e in raw_entities if isinstance(e, Concept)]
+  try:
+    raw_entities: list[KnowledgeEntity] = state.get("raw_entities", [])
+    raw_relationships: list[KnowledgeRelationship] = state.get("raw_relationships", [])
 
-  all_new_entities: list[KnowledgeEntity] = []
-  all_new_relationships: list[KnowledgeRelationship] = []
+    concepts_to_enrich: list[Concept] = [e for e in raw_entities if isinstance(e, Concept)]
 
-  concept: Concept
-  for concept in concepts_to_enrich:
-    new_entities: list[KnowledgeEntity]
-    new_relationships: list[KnowledgeRelationship]
-    new_entities, new_relationships = enrich_single_concept(concept)
-    all_new_entities.extend(new_entities)
-    all_new_relationships.extend(new_relationships)
+    all_new_entities: list[Any] = []
+    all_new_relationships: list[KnowledgeRelationship] = []
 
-  existing_ids: set[str] = {e.id for e in raw_entities}
-  deduped_new_entities: list[KnowledgeEntity] = [e for e in all_new_entities if e.id not in existing_ids]
+    concept: Concept
+    for concept in concepts_to_enrich:
+      new_entities: list[Any]
+      new_relationships: list[KnowledgeRelationship]
+      new_entities, new_relationships = enrich_single_concept(concept)
+      all_new_entities.extend(new_entities)
+      all_new_relationships.extend(new_relationships)
 
-  merged_entities: list[KnowledgeEntity] = raw_entities + deduped_new_entities
-  merged_relationships: list[KnowledgeRelationship] = raw_relationships + all_new_relationships
+    existing_ids: set[str] = {e.id for e in raw_entities}
+    deduped_new_entities: list[Any] = [e for e in all_new_entities if e.id not in existing_ids]
 
-  log_msg: str = f"[enrich_with_openalex] Enriched {len(concepts_to_enrich)} concepts. Added {len(deduped_new_entities)} new entities and {len(all_new_relationships)} new relationships."
+    merged_entities: list[Any] = raw_entities + deduped_new_entities
+    merged_relationships: list[KnowledgeRelationship] = raw_relationships + all_new_relationships
 
-  return {
-    "raw_entities": merged_entities,
-    "raw_relationships": merged_relationships,
-    "enriched_entities": deduped_new_entities,
-    "enriched_relationships": all_new_relationships,
-    "processing_log": state.get("processing_log", []) + [log_msg]
-  }
+    return {
+      "raw_entities": merged_entities,
+      "raw_relationships": merged_relationships,
+      "enriched_entities": deduped_new_entities,
+      "enriched_relationships": all_new_relationships,
+      "processing_log": state.get("processing_log", [])
+    }
+  except Exception:
+    return {
+      "raw_entities": state.get("raw_entities", []),
+      "raw_relationships": state.get("raw_relationships", []),
+      "enriched_entities": state.get("enriched_entities", []),
+      "enriched_relationships": state.get("enriched_relationships", []),
+      "processing_log": state.get("processing_log", [])
+    }

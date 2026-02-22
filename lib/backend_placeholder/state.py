@@ -1,7 +1,10 @@
 from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import KnowledgeEntity
+from StudyOntology.lib import KnowledgeGraph
 from StudyOntology.lib import SourceDocument
 from StudyOntology.lib import Assignment
+from operator import add
+from typing import Annotated
 from typing import TypedDict
 from typing import Optional
 from typing import Any
@@ -9,7 +12,11 @@ from typing import Any
 class KnowledgeExtractionState(TypedDict):
   filename: str
   document_type: str
-  textracted_text: str
+  extracted_text: str
+
+  # Boolean flags for conditional data source routing
+  query_canvas: bool
+  query_openalex: bool
 
   source_document: Optional[SourceDocument]
   chunks: list[str]
@@ -20,14 +27,14 @@ class KnowledgeExtractionState(TypedDict):
   enriched_entities: list[KnowledgeEntity]
   enriched_relationships: list[KnowledgeRelationship]
 
-  canvas_courses: list[dict]
+  canvas_courses: list[dict[str, Any]]
   canvas_assignments: list[Assignment]
 
   validation_errors: list[str]
   retry_count: int
 
-  knowledge_graph: Optional[dict[str, Any]]
+  knowledge_graph: Optional[KnowledgeGraph]
   graph_stats: dict[str, Any]
   graph_schema_options: dict[str, Any]
 
-  processing_log: list[str]
+  processing_log: Annotated[list[str], add]

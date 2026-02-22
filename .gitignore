@@ -8,6 +8,7 @@
 *.vscode/
 *.egg-info
 *__pycache__/
+*PROMPT.md
 *plans/
 *.duckdb
 *.env
