@@ -19,6 +19,7 @@ final: prev: {
           pydantic
           fastapi
           uvicorn
+          duckdb
           httpx
         ]) ++ (with prev; [
           python313Packages.study-ontology
