@@ -25,27 +25,22 @@ ALLOWED_RELATIONSHIP_TYPES: set[str] = {
   for rel_type in RelationshipType
 }
 
-
 class ExtractedGraphPayload(BaseModel):
   entities: list[KnowledgeEntity]
   relationships: list[KnowledgeRelationship]
-
 
 class ErrorEnvelope(BaseModel):
   error_code: str
   message: str
 
-
 class SourceSummary(BaseModel):
   source_id: str
   source_name: str
-
 
 class SourceRecord(BaseModel):
   source_id: str
   source_name: str
   data: dict[str, Any]
-
 
 class EntityRecord(BaseModel):
   entity_id: str
@@ -53,14 +48,12 @@ class EntityRecord(BaseModel):
   entity_type: str
   data: dict[str, Any]
 
-
 class RelationshipRecord(BaseModel):
   subject_entity_id: str
   object_entity_id: str
   relationship_type: str
   confidence: float | None = None
   data: dict[str, Any]
-
 
 class UploadResponse(BaseModel):
   source_id: str
@@ -73,10 +66,8 @@ class UploadResponse(BaseModel):
   compressed_bytes: int
   decompressed_bytes: int
 
-
 class ExtractRequest(BaseModel):
   artifact_path: Path
-
 
 class ExtractResponse(BaseModel):
   artifact_path: str
@@ -86,11 +77,9 @@ class ExtractResponse(BaseModel):
   added_relationships: int
   sources: list[SourceSummary]
 
-
 class QueryPaging(BaseModel):
   limit: int = Field(default=DEFAULT_LIMIT, ge=1, le=MAX_LIMIT)
   offset: int = Field(default=0, ge=0)
-
 
 class RelationshipsQueryRequest(QueryPaging):
   min_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
@@ -106,17 +95,14 @@ class RelationshipsQueryRequest(QueryPaging):
       raise ValueError("min_confidence must be <= max_confidence")
     return self
 
-
 class RelationshipsQueryResponse(BaseModel):
   items: list[RelationshipRecord]
   total: int
   limit: int
   offset: int
 
-
 class SourceSubgraphQueryRequest(QueryPaging):
   pass
-
 
 class SourcesSubgraphRequest(QueryPaging):
   source_ids: list[str] = Field(min_length=1, max_length=MAX_SOURCE_IDS)
@@ -129,10 +115,8 @@ class SourcesSubgraphRequest(QueryPaging):
       raise ValueError("source_ids must include at least one non-empty source id")
     return cleaned
 
-
 class EntitySubgraphQueryRequest(QueryPaging):
   pass
-
 
 class RelationshipTypeSubgraphQueryRequest(QueryPaging):
   relationship_type: str
@@ -144,7 +128,6 @@ class RelationshipTypeSubgraphQueryRequest(QueryPaging):
       allowed = ", ".join(sorted(ALLOWED_RELATIONSHIP_TYPES))
       raise ValueError(f"relationship_type must be one of: {allowed}")
     return value
-
 
 class EntityTypesSubgraphRequest(QueryPaging):
   entity_types: list[str] = Field(min_length=1, max_length=MAX_ENTITY_TYPES)
@@ -161,7 +144,6 @@ class EntityTypesSubgraphRequest(QueryPaging):
       raise ValueError(f"entity_types contains invalid values: {invalid}. allowed: {allowed}")
     return cleaned
 
-
 class GraphSubgraphResponse(BaseModel):
   entities: list[EntityRecord]
   relationships: list[RelationshipRecord]
@@ -171,7 +153,6 @@ class GraphSubgraphResponse(BaseModel):
   total_sources: int
   limit: int
   offset: int
-
 
 class UploadArtifact(BaseModel):
   source_id: str
@@ -185,7 +166,6 @@ class UploadArtifact(BaseModel):
   compressed_bytes: int
   decompressed_bytes: int
   created_at: str
-
 
 class TextractAdapterResult(BaseModel):
   text: str

@@ -16,7 +16,7 @@ def get_llm() -> Optional[ChatOpenAI]:
   api_key: str = os.getenv("OPENAI_API_KEY", "")
   if api_key == "":
     return None
-  return ChatOpenAI(model="gpt-4o", api_key=SecretStr(api_key))
+  return ChatOpenAI(model="gpt-5.2", api_key=SecretStr(api_key))
 
 def build_extraction_prompt(schema_options: dict[str, Any]) -> str:
   relationship_values: str = ", ".join(x.value for x in RelationshipType)

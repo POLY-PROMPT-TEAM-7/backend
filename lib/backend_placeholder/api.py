@@ -34,7 +34,7 @@ APP.add_middleware(
   allow_headers=["*"],
 )
 
-@APP.get("health/")
+@APP.get("/health")
 def health() -> dict[str, str]:
   return {"health": "ok"}
 

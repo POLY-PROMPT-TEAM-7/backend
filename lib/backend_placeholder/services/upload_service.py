@@ -10,7 +10,6 @@ from backend_placeholder.services.errors import ServiceError
 from fastapi import UploadFile
 from hashlib import sha256
 from pathlib import Path
-import gzip
 from uuid import uuid4
 
 MAX_COMPRESSED_BYTES: int = 20 * 1024 * 1024
@@ -19,48 +18,32 @@ READ_CHUNK_SIZE: int = 1024 * 1024
 EXTRACTION_TIMEOUT_SECONDS: int = 45
 
 async def ingest_upload(upload_file: UploadFile) -> UploadResponse:
-  normalized_filename = normalize_filename(upload_file.filename or "upload.gz")
-  if not normalized_filename.lower().endswith(".gz"):
-    raise ServiceError(400, "invalid_upload_type", "only .gz uploads are accepted")
-
-  gz_path = build_upload_path(".gz")
-  plain_path = build_upload_path(".txt")
+  normalized_filename = normalize_filename(upload_file.filename or "upload")
+  upload_suffix = "".join(Path(normalized_filename).suffixes)
+  upload_path = build_upload_path(upload_suffix)
 
   compressed_bytes = 0
+  decompressed_bytes = 0
+  digest = sha256()
   try:
-    with gz_path.open("wb") as target:
+    with upload_path.open("wb") as target:
       while True:
         chunk = await upload_file.read(READ_CHUNK_SIZE)
         if not chunk:
           break
         compressed_bytes += len(chunk)
+        decompressed_bytes += len(chunk)
         if compressed_bytes > MAX_COMPRESSED_BYTES:
           raise ServiceError(413, "compressed_size_exceeded", "compressed upload exceeds 20 MiB")
+        if decompressed_bytes > MAX_DECOMPRESSED_BYTES:
+          raise ServiceError(413, "decompressed_size_exceeded", "decompressed payload exceeds 100 MiB")
+        digest.update(chunk)
         target.write(chunk)
   finally:
     await upload_file.close()
 
-  decompressed_bytes = 0
-  digest = sha256()
-  try:
-    with gzip.open(gz_path, "rb") as source:
-      with plain_path.open("wb") as target:
-        while True:
-          chunk = source.read(READ_CHUNK_SIZE)
-          if not chunk:
-            break
-          decompressed_bytes += len(chunk)
-          if decompressed_bytes > MAX_DECOMPRESSED_BYTES:
-            raise ServiceError(413, "decompressed_size_exceeded", "decompressed payload exceeds 100 MiB")
-          digest.update(chunk)
-          target.write(chunk)
-  except ServiceError:
-    raise
-  except Exception as exc:
-    raise ServiceError(400, "invalid_gzip", f"unable to decompress gzip upload: {exc}") from exc
-
-  fallback_text = plain_path.read_text(encoding="utf-8", errors="replace")
-  textract_result = extract_text(plain_path, timeout_seconds=EXTRACTION_TIMEOUT_SECONDS)
+  fallback_text = upload_path.read_text(encoding="utf-8", errors="replace")
+  textract_result = extract_text(upload_path, timeout_seconds=EXTRACTION_TIMEOUT_SECONDS)
   extracted_text = textract_result.text.strip() or fallback_text
   if not extracted_text.strip():
     raise ServiceError(422, "empty_extracted_text", "unable to extract non-empty text from upload")
@@ -85,8 +68,7 @@ async def ingest_upload(upload_file: UploadFile) -> UploadResponse:
   artifact_path.write_text(artifact_payload.model_dump_json(indent=2), encoding="utf-8")
 
   try:
-    gz_path.unlink(missing_ok=True)
-    plain_path.unlink(missing_ok=True)
+    upload_path.unlink(missing_ok=True)
   except Exception:
     pass
 
