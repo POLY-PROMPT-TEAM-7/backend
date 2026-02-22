@@ -6,7 +6,7 @@ from backend_placeholder.nodes.extract_graph import extract_graph
 from backend_placeholder.state import KnowledgeExtractionState
 from backend_placeholder.nodes.mkgraph import mkgraph
 from StudyOntology.lib import SourceDocument
-from langgrapgh.graph import StateGraph
+from langgraph.graph import StateGraph
 from langgraph.graph import START
 from langgraph.graph import END
 from typing import Any
@@ -49,14 +49,20 @@ def process_document(
   source_document: SourceDocument | None = None
 ) -> KnowledgeExtractionState:
   """Run the full extraction pipeline on a document."""
-  initial_state: KnowledgeExtractionState = {
+  initial_state: dict[str, Any] = {
     "filename": filename,
     "document_type": "",
-    "textracted_text": extracted_text,
+    "extracted_text": extracted_text,
+    "query_canvas": False,
+    "query_openalex": False,
     "source_document": source_document,
     "chunks": [],
     "raw_entities": [],
     "raw_relationships": [],
+    "enriched_entities": [],
+    "enriched_relationships": [],
+    "canvas_courses": [],
+    "canvas_assignments": [],
     "validation_errors": [],
     "retry_count": 0,
     "knowledge_graph": None,

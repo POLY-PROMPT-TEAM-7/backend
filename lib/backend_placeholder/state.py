@@ -9,7 +9,11 @@ from typing import Any
 class KnowledgeExtractionState(TypedDict):
   filename: str
   document_type: str
-  textracted_text: str
+  extracted_text: str
+
+  # Boolean flags for conditional data source routing
+  query_canvas: bool
+  query_openalex: bool
 
   source_document: Optional[SourceDocument]
   chunks: list[str]
