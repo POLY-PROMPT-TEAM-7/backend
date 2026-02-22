@@ -99,10 +99,10 @@ def link_canvas_assignments(state: KnowledgeExtractionState) -> dict[str, Any]:
   linked: list[KnowledgeRelationship] = [
     x for x in result.relationships
     if (
-      x.predicate in allowed_predicates and
-      x.subject in valid_ids and
-      x.object in valid_ids and
-      ((x.subject in assignment_ids and x.object in entity_ids) or (x.subject in entity_ids and x.object in assignment_ids))
+      x.predicate in allowed_predicates
+      and x.subject in valid_ids
+      and x.object in valid_ids
+      and ((x.subject in assignment_ids and x.object in entity_ids) or (x.subject in entity_ids and x.object in assignment_ids))
     )
   ]
   return {

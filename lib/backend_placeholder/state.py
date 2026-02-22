@@ -3,6 +3,8 @@ from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import KnowledgeGraph
 from StudyOntology.lib import SourceDocument
 from StudyOntology.lib import Assignment
+from operator import add
+from typing import Annotated
 from typing import TypedDict
 from typing import Optional
 from typing import Any
@@ -35,4 +37,4 @@ class KnowledgeExtractionState(TypedDict):
   graph_stats: dict[str, Any]
   graph_schema_options: dict[str, Any]
 
-  processing_log: list[str]
+  processing_log: Annotated[list[str], add]

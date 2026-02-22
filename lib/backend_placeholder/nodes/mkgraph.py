@@ -38,15 +38,14 @@ def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   if isinstance(state_source_document, SourceDocument):
     source_documents = source_documents + [state_source_document]
 
-  graph_model: Any = KnowledgeGraph
-  graph_object: Any = graph_model(
+  graph_object: KnowledgeGraph = KnowledgeGraph(
     concepts=concepts,
     theories=theories,
     persons=persons,
     methods=methods,
     assignments=list(assignment_by_id.values()),
-    relationships=relationships
-    ,source_documents=source_documents
+    relationships=relationships,
+    source_documents=source_documents
   )
 
   try:
