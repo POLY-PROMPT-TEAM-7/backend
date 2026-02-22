@@ -1,17 +1,18 @@
 from backend_placeholder.state import KnowledgeExtractionState
 from backend_placeholder.models import ExtractedGraphPayload
-from StudyOntology.lib import RelationshipType
 from langchain_core.messages import SystemMessage
 from langchain_core.messages import HumanMessage
+from StudyOntology.lib import RelationshipType
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
+from typing import Optional
 from typing import cast
 from typing import Any
 import os
 
 # Precanned expert extraction prompt - not user-configurable
 
-def get_llm() -> ChatOpenAI | None:
+def get_llm() -> Optional[ChatOpenAI]:
   api_key: str = os.getenv("OPENAI_API_KEY", "")
   if api_key == "":
     return None
@@ -39,7 +40,7 @@ def build_retry_prompt(
 
 def extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   schema_options: dict[str, Any] = state.get("graph_schema_options", {})
-  llm: ChatOpenAI | None = get_llm()
+  llm: Optional[ChatOpenAI] = get_llm()
   if llm is None:
     return {
       "raw_entities": [],
@@ -75,7 +76,7 @@ def extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
 def retry_extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   schema_options: dict[str, Any] = state.get("graph_schema_options", {})
   validation_errors: list[str] = state.get("validation_errors", [])
-  llm: ChatOpenAI | None = get_llm()
+  llm: Optional[ChatOpenAI] = get_llm()
   next_retry_count: int = state.get("retry_count", 0) + 1
   if llm is None:
     return {

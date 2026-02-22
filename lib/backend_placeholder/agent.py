@@ -1,10 +1,10 @@
+from backend_placeholder.integrations.enrich_openalex import enrich_with_openalex
 from backend_placeholder.nodes.schema_options import inject_graph_schema_options
+from backend_placeholder.nodes.link_canvas import link_canvas_assignments
 from backend_placeholder.nodes.extract_graph import retry_extract_graph
 from backend_placeholder.nodes.retry_flow import route_after_validate
 from backend_placeholder.nodes.validate_graph import validate_graph
 from backend_placeholder.nodes.extract_graph import extract_graph
-from backend_placeholder.nodes.link_canvas import link_canvas_assignments
-from backend_placeholder.integrations.enrich_openalex import enrich_with_openalex
 from backend_placeholder.integrations.canvas import canvas_node
 from backend_placeholder.state import KnowledgeExtractionState
 from backend_placeholder.nodes.mkgraph import mkgraph
@@ -13,11 +13,12 @@ from StudyOntology.lib import SourceDocument
 from langgraph.graph import StateGraph
 from langgraph.graph import START
 from langgraph.graph import END
+from typing import Optional
+from typing import Literal
 from typing import cast
 from typing import Any
-from typing import Literal
 
-def openalex_gate(state: KnowledgeExtractionState) -> dict[str, Any]:
+def openalex_gate() -> dict[str, Any]:
   return {}
 
 def canvas_node_typed(state: KnowledgeExtractionState) -> dict[str, Any]:
@@ -94,7 +95,7 @@ def process_document(
   extracted_text: str,
   query_canvas: bool = False,
   query_openalex: bool = False,
-  source_document: SourceDocument | None = None
+  source_document: Optional[SourceDocument] = None
 ) -> KnowledgeGraph:
   # Pipeline entry point - returns Pydantic KnowledgeGraph
   """Run the full extraction pipeline on a document."""
@@ -120,7 +121,7 @@ def process_document(
     "processing_log": [f"Started processing: {filename}"]
   }
   result: KnowledgeExtractionState = cast(KnowledgeExtractionState, PIPELINE.invoke(initial_state))
-  knowledge_graph: KnowledgeGraph | None = cast(KnowledgeGraph | None, result["knowledge_graph"])
+  knowledge_graph: Optional[KnowledgeGraph] = cast(Optional[KnowledgeGraph], result["knowledge_graph"])
   if knowledge_graph is None:
     return KnowledgeGraph(
       concepts=[],

@@ -1,13 +1,14 @@
 from backend_placeholder.state import KnowledgeExtractionState
 from StudyOntology.lib import KnowledgeRelationship
+from langchain_core.messages import SystemMessage
+from langchain_core.messages import HumanMessage
 from StudyOntology.lib import RelationshipType
 from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import Assignment
-from langchain_core.messages import SystemMessage
-from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from pydantic import SecretStr
+from typing import Optional
 from typing import cast
 from typing import Any
 import os
@@ -15,7 +16,7 @@ import os
 class CanvasLinkPayload(BaseModel):
   relationships: list[KnowledgeRelationship]
 
-def get_llm() -> ChatOpenAI | None:
+def get_llm() -> Optional[ChatOpenAI]:
   api_key: str = os.getenv("OPENAI_API_KEY", "")
   if api_key == "":
     return None
@@ -68,7 +69,7 @@ def link_canvas_assignments(state: KnowledgeExtractionState) -> dict[str, Any]:
       "processing_log": state.get("processing_log", [])
     }
 
-  llm: ChatOpenAI | None = get_llm()
+  llm: Optional[ChatOpenAI] = get_llm()
   if llm is None:
     return {
       "raw_relationships": state.get("raw_relationships", []),
