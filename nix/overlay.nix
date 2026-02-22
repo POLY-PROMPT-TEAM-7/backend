@@ -41,6 +41,7 @@ final: prev: {
         ]);
         propagatedBuildInputs = (with pyFinal; [
           langchain-openai
+          python-multipart
           langchain-core
           langchain
           langgraph
