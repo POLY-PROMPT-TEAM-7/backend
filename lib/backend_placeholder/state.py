@@ -3,10 +3,10 @@ from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import KnowledgeGraph
 from StudyOntology.lib import SourceDocument
 from StudyOntology.lib import Assignment
-from operator import add
 from typing import Annotated
 from typing import TypedDict
 from typing import Optional
+from operator import add
 from typing import Any
 
 class KnowledgeExtractionState(TypedDict):
