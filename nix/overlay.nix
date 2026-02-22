@@ -19,6 +19,18 @@ final: prev: {
           python-dotenv
           python-docx
           python-pptx
+          langchain-openai
+          langchain-core
+          langchain
+          langgraph
+          requests
+          pydantic
+          fastapi
+          uvicorn
+          duckdb
+          httpx
+        ]) ++ (with prev; [
+          python313Packages.study-ontology
         ]);
         doCheck = false;
       };

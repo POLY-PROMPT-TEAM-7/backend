@@ -1,5 +1,6 @@
 *CLAUDE.md
-*AGENTS.md
+*SCOPE.md
+*.ruff_cache/
 *.claude/
 *.sisyphus/
 *.opencode/
@@ -7,11 +8,10 @@
 *.vscode/
 *.egg-info
 *__pycache__/
+*PROMPT.md
 *plans/
 *.duckdb
-.worktrees/
-venv/
-.nix-ssh/
-result/
-.direnv/
-.env
+*.env
+*result/
+*result
+*.ralph/

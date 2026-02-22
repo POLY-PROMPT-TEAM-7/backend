@@ -32,7 +32,13 @@ dev = [
 where = ["lib"]
 
 [project.scripts]
-deploy-backend = "backend_placeholder.server:serve"
+deploy-backend = "backend_placeholder.server:runner"
 
-[tool.pytest.ini_options]
-addopts = "-v"
+[tool.ruff]
+extend-exclude = ["*.py", "^.*$"]
+force-exclude = true
+line-length = 320
+indent-width = 2
+
+[tool.pylint.master]
+ignore-paths = ["^.*$"]

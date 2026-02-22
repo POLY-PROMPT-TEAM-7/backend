@@ -5,7 +5,8 @@ in {
   packages.default = py.document-processor;
   devShells.default = pkgs.mkShell {
     packages = (with py; [
-      document-processor
+      backend-placeholder
+      duckdb
       python
       pytest
       flake8
