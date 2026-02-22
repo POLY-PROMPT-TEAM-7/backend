@@ -1,4 +1,4 @@
-# BackendTwo API
+# Backend API
 
 Simple FastAPI backend for knowledge graph extraction and query.
 

@@ -15,14 +15,17 @@ final: prev: {
         ]);
         postPatch = ''
           sed -E -i 's/[=<>~!].*//g' requirements/python
+          substituteInPlace textract/parsers/pdf_parser.py --replace-fail "pdf2txt.py" "pdf2txt"
         '';
         propagatedBuildInputs = (with pyFinal; [
           speechrecognition
           beautifulsoup4
           pdfminer-six
+          argcomplete
           python-pptx
           python-docx
           extract-msg
+          docx2txt
           ebooklib
           chardet
           xlrd
@@ -43,6 +46,7 @@ final: prev: {
           langchain-openai
           python-multipart
           langchain-core
+          pdfminer-six
           langchain
           langgraph
           textract
