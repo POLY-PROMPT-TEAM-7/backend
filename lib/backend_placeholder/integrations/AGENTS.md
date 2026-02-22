@@ -1,6 +1,8 @@
 # External API Integrations
 
 **Generated:** 2026-02-21
+**Commit:** 209432e
+**Branch:** duckdb-prototype
 
 ## OVERVIEW
 External API integrations for enriching extracted knowledge graphs with academic and LMS data.

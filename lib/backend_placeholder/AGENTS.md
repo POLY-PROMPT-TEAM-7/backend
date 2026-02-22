@@ -1,10 +1,11 @@
 # Backend Package Knowledge Base
 
 **Generated:** 2026-02-21
-**Commit:** b27da408
+**Commit:** 209432e
+**Branch:** duckdb-prototype
 
 ## OVERVIEW
-FastAPI application orchestrating LangGraph knowledge extraction pipeline with external API integrations.
+FastAPI application orchestrating a LangGraph knowledge extraction pipeline with external API integrations.
 
 ## STRUCTURE
 ```
@@ -14,12 +15,14 @@ lib/backend_placeholder/
 ├── state.py                  # Agent state management (TypedDict)
 ├── models.py                 # Pydantic models
 ├── server.py                 # Uvicorn runner
+├── database.py               # DuckDB schema notes (no logic)
 ├── nodes/                    # LangGraph workflow nodes
-│   ├── extract_graph.py      # GPT-4o entity extraction
+│   ├── extract_graph.py      # LLM entity extraction + retry
 │   ├── validate_graph.py     # Entity/relationship validation
 │   ├── mkgraph.py            # Graph construction
 │   ├── schema_options.py     # Schema injection
-│   └── retry_flow.py         # Retry logic
+│   ├── retry_flow.py         # Retry routing
+│   └── link_canvas.py        # Canvas assignment linking
 └── integrations/             # External API integrations
     ├── enrich_openalex.py    # OpenAlex concept enrichment
     └── canvas.py              # Canvas LMS integration
@@ -38,8 +41,8 @@ lib/backend_placeholder/
 
 ## CONVENTIONS (Package-Level)
 - **LangGraph nodes**: Functions receive `state: KnowledgeExtractionState`, return partial dict update
-- **Pipeline flow**: inject_schema_options → extract_graph → validate_graph → (retry?) → mkgraph → END
-- **Error handling**: Nodes return validation_errors[], processing_log[], continue pipeline
+- **Pipeline flow**: inject_schema_options → (canvas_node + extract_graph) → validate_graph → retry_extract_graph → openalex_gate → enrich_with_openalex → link_canvas_assignments → mkgraph
+- **Error handling**: Nodes append to validation_errors[]/processing_log[] and continue
 - **State updates**: Always return dict with fields to update (not full state)
 - **API keys**: Loaded from env vars (OPENAI_API_KEY, OPENALEX_API_KEY, CANVAS_API_KEY)
 
@@ -53,7 +56,7 @@ lib/backend_placeholder/
 - **Package layout**: `lib/backend_placeholder/` (non-standard, typical is `src/` or `app/`)
 - **Empty markers**: `__init__.py` files are empty (package markers only)
 - **Pipeline constant**: Compiled graph stored in `PIPELINE` module-level constant
-- **Route conditional**: `route_after_validate()` determines retry flow
+- **Conditional routing**: validate/openalex/enrichment nodes choose next hop
 
 ## COMMANDS
 ```bash
@@ -66,7 +69,6 @@ flake8 lib/backend_placeholder/
 
 ## NOTES
 LangGraph StateGraph orchestrates extraction workflow
-State flows through nodes sequentially, accumulating entities/relationships
 Integrations add enriched data to existing extraction results
 Canvas API requires CalPoly-specific base URL
 See [nodes/AGENTS.md](nodes/AGENTS.md) for LangGraph node conventions
