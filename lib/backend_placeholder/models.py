@@ -10,11 +10,11 @@ class ExtractedGraphPayload(BaseModel):
 class SourceRecord(BaseModel):
   source_id: int
   source_name: str
-  text: str
+  text: Path
 
 class ExtractResponse(BaseModel):
-    source_id: int
-    source_name: str
+  source_id: int
+  source_name: str
 
 class ExtractRequest(BaseModel):
-  text_path: str
+  text: Path
