@@ -150,6 +150,7 @@ def enrich_single_concept(
 def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
   # Skip enrichment if OpenAlex flag is disabled
   if not state.get("query_openalex", False):
+    print("[openalex_node] skipped query_openalex=False")
     return {
       "raw_entities": state.get("raw_entities", []),
       "raw_relationships": state.get("raw_relationships", []),
@@ -159,6 +160,7 @@ def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
     }
   # Graceful degradation: skip if API key missing or request fails
   if get_openalex_api_key() == "":
+    print("[openalex_node] skipped missing OPENALEX_API_KEY")
     return {
       "raw_entities": state.get("raw_entities", []),
       "raw_relationships": state.get("raw_relationships", []),
@@ -189,6 +191,11 @@ def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
 
     merged_entities: list[Any] = raw_entities + deduped_new_entities
     merged_relationships: list[KnowledgeRelationship] = raw_relationships + all_new_relationships
+    print(
+      "[openalex_node] enriched "
+      f"concepts={len(concepts_to_enrich)} new_entities={len(deduped_new_entities)} "
+      f"new_relationships={len(all_new_relationships)}"
+    )
 
     return {
       "raw_entities": merged_entities,
@@ -197,7 +204,8 @@ def enrich_with_openalex(state: KnowledgeExtractionState) -> dict[str, Any]:
       "enriched_relationships": all_new_relationships,
       "processing_log": state.get("processing_log", [])
     }
-  except Exception:
+  except Exception as e:
+    print(f"[openalex_node] failed: {e}")
     return {
       "raw_entities": state.get("raw_entities", []),
       "raw_relationships": state.get("raw_relationships", []),

@@ -38,8 +38,11 @@ def _coerce_entities(values: list[Any], klass: type[Any], class_name: str, id_pr
       if isinstance(normalized_id, str):
         payload["id"] = normalized_id
 
-      if id_prefix is not None and (not isinstance(normalized_id, str) or not normalized_id.startswith(id_prefix)):
-        continue
+      if id_prefix is not None:
+        if not isinstance(normalized_id, str):
+          continue
+        if ":" in normalized_id and not normalized_id.startswith(id_prefix):
+          continue
 
       try:
         result.append(klass(**payload))
@@ -52,7 +55,7 @@ def _coerce_entities(values: list[Any], klass: type[Any], class_name: str, id_pr
         result.append(value)
       else:
         normalized_id = _normalize_entity_id(getattr(value, "id", None))
-        if isinstance(normalized_id, str) and normalized_id.startswith(id_prefix):
+        if isinstance(normalized_id, str) and (":" not in normalized_id or normalized_id.startswith(id_prefix)):
           result.append(value)
       continue
 

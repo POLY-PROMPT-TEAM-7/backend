@@ -52,12 +52,14 @@ def canvas_node(state: dict) -> dict:
   """
   # Graceful degradation: skip if API key missing or request fails
   if not state.get("query_canvas", False):
+    print("[canvas_node] skipped query_canvas=False")
     return {
       "canvas_courses": state.get("canvas_courses", []),
       "canvas_assignments": state.get("canvas_assignments", []),
       "processing_log": state.get("processing_log", [])
     }
   if get_canvas_api_key() == "":
+    print("[canvas_node] skipped missing CANVAS_API_KEY")
     return {
       "canvas_courses": [],
       "canvas_assignments": [],
@@ -68,13 +70,15 @@ def canvas_node(state: dict) -> dict:
     raw_courses: list[dict[str, Any]] = get_courses()
     active_courses: list[dict[str, Any]] = filter_active_courses(raw_courses)
     assignments: list[Assignment] = build_assignments(active_courses)
+    print(f"[canvas_node] fetched courses={len(active_courses)} assignments={len(assignments)}")
 
     return {
       "canvas_courses": active_courses,
       "canvas_assignments": assignments,
       "processing_log": state.get("processing_log", [])
     }
-  except Exception:
+  except Exception as e:
+    print(f"[canvas_node] failed: {e}")
     return {
       "canvas_courses": [],
       "canvas_assignments": [],
