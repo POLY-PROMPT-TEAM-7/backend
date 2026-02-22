@@ -18,7 +18,8 @@ from typing import Literal
 from typing import cast
 from typing import Any
 
-def openalex_gate() -> dict[str, Any]:
+def openalex_gate(state: KnowledgeExtractionState) -> dict[str, Any]:
+  _ = state
   return {}
 
 def canvas_node_typed(state: KnowledgeExtractionState) -> dict[str, Any]:
