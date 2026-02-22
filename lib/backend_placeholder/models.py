@@ -68,6 +68,8 @@ class UploadResponse(BaseModel):
 
 class ExtractRequest(BaseModel):
   artifact_path: Path
+  query_canvas: bool = False
+  query_openalex: bool = False
 
 class ExtractResponse(BaseModel):
   artifact_path: str

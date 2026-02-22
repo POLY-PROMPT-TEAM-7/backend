@@ -50,6 +50,8 @@ def run_extract(request: ExtractRequest) -> ExtractResponse:
     filename=artifact.source_name,
     extracted_text=artifact.extracted_text,
     source_document=source_document,
+    query_canvas=request.query_canvas,
+    query_openalex=request.query_openalex,
   )
   add_data_to_db(knowledge_graph)
 
