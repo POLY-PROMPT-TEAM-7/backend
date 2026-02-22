@@ -10,6 +10,31 @@ from StudyOntology.lib import SourceDocument
 from StudyOntology.lib import Theory
 from typing import Any
 
+
+def _coerce_entities(values: list[Any], klass: type[Any], class_name: str) -> list[Any]:
+  result: list[Any] = []
+  for value in values:
+    if isinstance(value, klass):
+      result.append(value)
+      continue
+    if value.__class__.__name__ != class_name:
+      continue
+    payload: Any = None
+    if isinstance(value, dict):
+      payload = value
+    elif hasattr(value, "model_dump"):
+      try:
+        payload = value.model_dump()
+      except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+      continue
+    try:
+      result.append(klass(**payload))
+    except Exception:
+      continue
+  return result
+
 def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   entities: list[KnowledgeEntity] = state.get("raw_entities", [])
   relationships: list[KnowledgeRelationship] = state.get("raw_relationships", [])
@@ -17,12 +42,12 @@ def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:
   state_source_document: Any = state.get("source_document", None)
 
   # Build complete KnowledgeGraph with all StudyOntology entity types
-  concepts: list[Concept] = [x for x in entities if isinstance(x, Concept)]
-  theories: list[Theory] = [x for x in entities if isinstance(x, Theory)]
-  persons: list[Person] = [x for x in entities if isinstance(x, Person)]
-  methods: list[Method] = [x for x in entities if isinstance(x, Method)]
-  entity_assignments: list[Assignment] = [x for x in entities if isinstance(x, Assignment)]
-  source_documents: list[SourceDocument] = [x for x in entities if isinstance(x, SourceDocument)]
+  concepts: list[Concept] = _coerce_entities(entities, Concept, "Concept")
+  theories: list[Theory] = _coerce_entities(entities, Theory, "Theory")
+  persons: list[Person] = _coerce_entities(entities, Person, "Person")
+  methods: list[Method] = _coerce_entities(entities, Method, "Method")
+  entity_assignments: list[Assignment] = _coerce_entities(entities, Assignment, "Assignment")
+  source_documents: list[SourceDocument] = _coerce_entities(entities, SourceDocument, "SourceDocument")
 
   assignment_models: list[Assignment] = []
   for x in state_assignments:
