@@ -13,12 +13,13 @@ final: prev: {
         propagatedBuildInputs = (with pyFinal; [
           langchain-openai
           langchain-core
-          python-dotenv
           langchain
           langgraph
+          requests
           pydantic
           fastapi
           uvicorn
+          httpx
         ]) ++ (with prev; [
           python313Packages.study-ontology
         ]);

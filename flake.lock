@@ -113,11 +113,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1771668856,
-        "narHash": "sha256-aFY2lhTrZHpah1S39ChczuTNX3//SZtbc75arKN1ALI=",
+        "lastModified": 1771710776,
+        "narHash": "sha256-MP2SsAU+PfkdvDGA5DBKmIqyz4EmoEfrRC12oRg7Owo=",
         "owner": "POLY-PROMPT-TEAM-7",
         "repo": "StudyOntology",
-        "rev": "26c2d1c9ce2d2fd50c72ff0e4bd54da406f718f8",
+        "rev": "633538486e26c53dfc5a91ad2de601e358d72777",
         "type": "github"
       },
       "original": {

@@ -2,6 +2,7 @@ from backend_placeholder.state import KnowledgeExtractionState
 from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import RelationshipType
 from StudyOntology.lib import KnowledgeEntity
+from StudyOntology.lib import Assignment
 from typing import Any
 
 def validate_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
@@ -13,8 +14,11 @@ def validate_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
 
   for x in entities:
     eid: Any = getattr(x, "id", None)
+    name: Any = getattr(x, "name", None)
     if not isinstance(eid, str) or not eid:
       errors += [f'Entity "{eid}" has no valid ID']
+    elif isinstance(x, Assignment) and (not isinstance(name, str) or not name.strip()):
+      errors += [f'Assignment entity "{eid}" has no valid name']
     elif eid in entity_ids:
       errors += [f'Duplicate entity ID "{eid}"']
     else:
@@ -24,7 +28,7 @@ def validate_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   for x in relationships:
     subject: Any = getattr(x, "subject", None)
     obj: Any = getattr(x, "object", None)
-    relation_type: Any = getattr(x, "type", None)
+    relation_type: Any = getattr(x, "predicate", None)
     confidence: Any = getattr(x, "confidence", None)
 
     if not isinstance(subject, str) or subject not in entity_ids:
