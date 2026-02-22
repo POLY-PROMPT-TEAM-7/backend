@@ -20,7 +20,7 @@ class KnowledgeExtractionState(TypedDict):
   enriched_entities: list[KnowledgeEntity]
   enriched_relationships: list[KnowledgeRelationship]
 
-  canvas_courses: list[dict]
+  canvas_courses: list[dict[str, Any]]
   canvas_assignments: list[Assignment]
 
   validation_errors: list[str]
