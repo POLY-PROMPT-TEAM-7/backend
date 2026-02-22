@@ -15,6 +15,7 @@ final: prev: {
           langchain-core
           langchain
           langgraph
+          requests
           pydantic
           fastapi
           uvicorn
