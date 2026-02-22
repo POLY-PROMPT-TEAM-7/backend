@@ -2,10 +2,8 @@ name: Publish Backend Docker Image
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - "v*"
+    branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -15,17 +13,28 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Keep going if one architecture fails
+      matrix:
+        include:
+          - { arch: x86_64-linux, suffix: amd64 }
+          - { arch: aarch64-linux, suffix: arm64 }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Allows the x86 runner to build ARM binaries via emulation
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Install Nix
         uses: cachix/install-nix-action@v31
 
-      - name: Build Docker image with Nix flake
-        run: nix build .#docker
+      - name: Build Docker image with Nix
+        # Nix uses the arch string from the matrix to evaluate the flake
+        run: nix build .#docker --system ${{ matrix.arch }}
 
-      - name: Load image from Nix result
+      - name: Load image into local Docker daemon
         run: docker load < result
 
       - name: Compute image tags
@@ -34,15 +43,13 @@ jobs:
         run: |
           set -euo pipefail
           OWNER_LOWER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE="ghcr.io/${OWNER_LOWER}/backend-placeholder"
-
+          # This creates: ghcr.io/user/backend-placeholder-amd64 (or -arm64)
+          IMAGE="ghcr.io/${OWNER_LOWER}/backend-placeholder-${{ matrix.suffix }}"
+          
           TAGS="${IMAGE}:sha-${GITHUB_SHA}"
-
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            TAG_NAME="${GITHUB_REF_NAME}"
-            TAGS+=$'\n'"${IMAGE}:${TAG_NAME}"
+            TAGS+=$'\n'"${IMAGE}:${GITHUB_REF_NAME}"
           fi
-
           if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
             TAGS+=$'\n'"${IMAGE}:latest"
           fi
@@ -50,7 +57,7 @@ jobs:
           {
             echo "image=${IMAGE}"
             echo "tags<<EOF"
-            printf '%s\n' "${TAGS}"
+            echo "${TAGS}"
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
@@ -61,21 +68,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Tag loaded image for GHCR
+      - name: Tag and Push
         shell: bash
         run: |
           set -euo pipefail
+          # 'backend-placeholder' matches the 'name' in your docker.nix
           SOURCE="backend-placeholder:latest"
           while IFS= read -r tag; do
-            [[ -n "${tag}" ]] || continue
-            docker tag "${SOURCE}" "${tag}"
-          done <<< "${{ steps.meta.outputs.tags }}"
-
-      - name: Push image tags to GHCR
-        shell: bash
-        run: |
-          set -euo pipefail
-          while IFS= read -r tag; do
-            [[ -n "${tag}" ]] || continue
-            docker push "${tag}"
+            [[ -z "$tag" ]] && continue
+            echo "Tagging $SOURCE as $tag..."
+            docker tag "$SOURCE" "$tag"
+            docker push "$tag"
           done <<< "${{ steps.meta.outputs.tags }}"
