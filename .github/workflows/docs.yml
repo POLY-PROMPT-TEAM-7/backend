@@ -1,0 +1,81 @@
+name: Publish Backend Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Build Docker image with Nix flake
+        run: nix build .#docker
+
+      - name: Load image from Nix result
+        run: docker load < result
+
+      - name: Compute image tags
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          OWNER_LOWER="${GITHUB_REPOSITORY_OWNER,,}"
+          IMAGE="ghcr.io/${OWNER_LOWER}/backend-placeholder"
+
+          TAGS="${IMAGE}:sha-${GITHUB_SHA}"
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+            TAGS+=$'\n'"${IMAGE}:${TAG_NAME}"
+          fi
+
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            TAGS+=$'\n'"${IMAGE}:latest"
+          fi
+
+          {
+            echo "image=${IMAGE}"
+            echo "tags<<EOF"
+            printf '%s\n' "${TAGS}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag loaded image for GHCR
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE="backend-placeholder:latest"
+          while IFS= read -r tag; do
+            [[ -n "${tag}" ]] || continue
+            docker tag "${SOURCE}" "${tag}"
+          done <<< "${{ steps.meta.outputs.tags }}"
+
+      - name: Push image tags to GHCR
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            [[ -n "${tag}" ]] || continue
+            docker push "${tag}"
+          done <<< "${{ steps.meta.outputs.tags }}"

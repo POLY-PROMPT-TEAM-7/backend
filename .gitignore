@@ -1,5 +1,6 @@
 *CLAUDE.md
-*AGENTS.md
+*SCOPE.md
+*.ruff_cache/
 *.claude/
 *.sisyphus/
 *.opencode/
@@ -10,5 +11,5 @@
 *plans/
 *.duckdb
 *.env
-*testCanvas.py
-*anvasJsonFormat.json
+*result/
+*result
