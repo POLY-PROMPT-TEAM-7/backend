@@ -1,25 +1,31 @@
 [build-system]
 requires = [
-  "setuptools>=80.9.0",
-  "wheel>=0.45.1"
+    "setuptools>=80.9.0",
+    "wheel>=0.45.1"
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "backend_placeholder"
+name = "document_processor"
 version = "1.0.0"
 requires-python = ">=3.13"
-
-[project.dependencies]
-boto3 = ">=1.34.0"
-pydantic = "*"
-fastapi = "*"
-uvicorn = "*"
-python-multipart = "*"
+dependencies = [
+    "boto3>=1.34.0",
+    "pydantic",
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+    "python-dotenv",
+    "python-docx>=1.1.0",
+    "python-pptx>=0.6.23",
+]
 
 [project.optional-dependencies]
+test = [
+    "pytest-asyncio",
+]
 dev = [
-  "pytest-asyncio",
+    "pyright",
 ]
 
 [tool.setuptools.packages.find]
@@ -27,3 +33,6 @@ where = ["lib"]
 
 [project.scripts]
 deploy-backend = "backend_placeholder.server:serve"
+
+[tool.pytest.ini_options]
+addopts = "-v"

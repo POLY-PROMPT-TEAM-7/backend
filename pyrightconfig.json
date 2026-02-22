@@ -1,0 +1,23 @@
+{
+  "include": [
+    "lib",
+    "tests/document_processor"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".nix-venv",
+    ".venv",
+    ".venv-review",
+    "result",
+    "tmp"
+  ],
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "standard",
+  "reportMissingParameterType": "error",
+  "reportMissingTypeArgument": "error",
+  "reportUnknownParameterType": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": "none"
+}

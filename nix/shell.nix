@@ -2,17 +2,15 @@
 let 
   py = pkgs.python313Packages;
 in {
-  packages.default = py.backend-placeholder;
+  packages.default = py.document-processor;
   devShells.default = pkgs.mkShell {
     packages = (with py; [
-      backend-placeholder
+      document-processor
       python
       pytest
-      pytest-asyncio
       flake8
-      pip
     ]) ++ (with pkgs; [
       pyright
     ]);
-  };
+   };
 }
