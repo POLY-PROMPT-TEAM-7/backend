@@ -1,6 +1,9 @@
+from backend_placeholder.models import ExtractResponse
+from backend_placeholder.models import ExtractRequest
+from backend_placeholder.models import SourceRecord
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, HTTPException
-from .models import ExtractResponse, SourceRecord, ExtractRequest
+from fastapi import HTTPException
+from fastapi import FastAPI
 from pathlib import Path
 
 APP: FastAPI = FastAPI()
