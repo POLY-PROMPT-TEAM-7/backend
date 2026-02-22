@@ -1,10 +1,11 @@
 import duckdb
-import importlib
 import json
 
+from importlib import import_module
+from typing import Any
+from typing import TypeAlias
 
-class KnowledgeGraph:
-  pass
+KnowledgeGraph: TypeAlias = Any
 
 """
 # SCHEMA
@@ -53,8 +54,11 @@ ENTITY_TYPE_MAP: dict[str, str] = {
 
 
 def populate_db(kg: KnowledgeGraph, db_path: str = DB_PATH) -> None:
-  study_lib = importlib.import_module("StudyOntology.lib")
-  RelationshipType = getattr(study_lib, "RelationshipType")
+  try:
+    study_lib = import_module("StudyOntology.lib")
+    relationship_type_enum = getattr(study_lib, "RelationshipType")
+  except (ModuleNotFoundError, AttributeError) as exc:
+    raise RuntimeError("StudyOntology.lib.RelationshipType is required") from exc
 
   con = duckdb.connect(db_path)
   try:
@@ -124,8 +128,8 @@ def populate_db(kg: KnowledgeGraph, db_path: str = DB_PATH) -> None:
         [entity_type_name, entity_type_name],
       )
 
-    for rel_type in RelationshipType:
-      rel_type_value = rel_type.value
+    for rel_type in relationship_type_enum:
+      rel_type_value = rel_type.value if hasattr(rel_type, "value") else str(rel_type)
       con.execute(
         "INSERT OR IGNORE INTO RELATIONSHIP_TYPES (RELATIONSHIP_TYPE_ID, RELATIONSHIP_TYPE_NAME) VALUES (?, ?)",
         [rel_type_value, rel_type_value],
@@ -163,9 +167,9 @@ def populate_db(kg: KnowledgeGraph, db_path: str = DB_PATH) -> None:
     for rel in getattr(kg, "relationships", None) or []:
       ndjson = rel.model_dump_json()
       json.loads(ndjson)
-
-      predicate = rel.predicate
-      predicate_id = predicate.value if hasattr(predicate, "value") else str(predicate)
+      predicate_id = rel.predicate
+      if not isinstance(predicate_id, str):
+        predicate_id = predicate_id.value if hasattr(predicate_id, "value") else str(predicate_id)
 
       con.execute(
         "INSERT OR REPLACE INTO RELATIONSHIPS (SUBJECT_ENTITY_ID, OBJECT_ENTITY_ID, RELATIONSHIP_TYPE_ID, NDJSON, CONFIDENCE) VALUES (?, ?, ?, ?, ?)",
@@ -179,11 +183,11 @@ def populate_db(kg: KnowledgeGraph, db_path: str = DB_PATH) -> None:
       )
 
     con.execute("COMMIT")
-  except Exception as exc:
+  except Exception:
     try:
       con.execute("ROLLBACK")
-    except Exception as rollback_exc:
-      raise exc from rollback_exc
+    except Exception:
+      pass
     raise
   finally:
     con.close()
