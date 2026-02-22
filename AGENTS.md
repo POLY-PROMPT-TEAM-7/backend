@@ -22,6 +22,13 @@ FastAPI backend for the KG Study Tool. LangGraph pipeline extracts entities/rela
 │   ├── models.py                 # Pydantic models
 │   ├── server.py                 # runner() -> uvicorn.run(APP)
 │   ├── database.py               # DuckDB schema notes (no logic)
+│   ├── services/                 # API-facing service layer
+│   │   ├── upload_service.py      # Gzip ingest + artifact creation
+│   │   ├── extract_service.py     # Pipeline run + DB persistence
+│   │   ├── query_service.py       # Relationship/subgraph query wrappers
+│   │   ├── path_safety.py         # Upload sandbox + path validation
+│   │   ├── textract_adapter.py    # Timeout-guarded textract bridge
+│   │   └── errors.py              # ServiceError contract
 │   ├── nodes/                    # LangGraph workflow nodes
 │   │   ├── extract_graph.py       # LLM extraction + retry
 │   │   ├── validate_graph.py      # Validation rules
@@ -46,6 +53,7 @@ FastAPI backend for the KG Study Tool. LangGraph pipeline extracts entities/rela
 | Pipeline orchestration | lib/backend_placeholder/agent.py | StateGraph, PIPELINE, process_document() |
 | State schema | lib/backend_placeholder/state.py | KnowledgeExtractionState TypedDict |
 | Models | lib/backend_placeholder/models.py | ExtractRequest/Response, payloads |
+| Service layer | lib/backend_placeholder/services/AGENTS.md | Upload/extract/query orchestration |
 | Nodes overview | lib/backend_placeholder/nodes/AGENTS.md | Node conventions + flow |
 | Integrations overview | lib/backend_placeholder/integrations/AGENTS.md | API conventions + endpoints |
 | Docker image build | nix/docker.nix | buildImage config + CMD |
@@ -57,6 +65,7 @@ FastAPI backend for the KG Study Tool. LangGraph pipeline extracts entities/rela
 - **Pipeline errors** accumulate in `validation_errors[]`/`processing_log[]` and continue
 - **Nix-first workflow**: dev shell + docker build via flake (no Dockerfile)
 - **Linting**: `flake8` is used; `ruff` and `pylint` are disabled in `pyproject.toml`
+- **Service boundary**: API handlers translate `ServiceError` into HTTP responses
 
 ## ANTI-PATTERNS (THIS PROJECT)
 - **NEVER** return full KnowledgeExtractionState from nodes
@@ -65,11 +74,13 @@ FastAPI backend for the KG Study Tool. LangGraph pipeline extracts entities/rela
 - **NO** hard-coded API endpoints; use constants
 - **NEVER** retry indefinitely in integrations (single attempt)
 - **DO NOT** replace original extraction; merge into `enriched_*`
+- **DO NOT** allow unsandboxed artifact paths; enforce upload root and `.json` suffix
 
 ## UNIQUE STYLES
 - **Package layout**: `lib/backend_placeholder/` (not `src/`)
 - **Pipeline constant**: compiled graph stored as `PIPELINE`
 - **CI docker from flake**: `nix build .#docker` + GHCR publish
+- **Upload limits**: 20 MiB compressed and 100 MiB decompressed caps in service layer
 
 ## COMMANDS
 ```bash

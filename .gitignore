@@ -16,3 +16,4 @@
 *result
 *.ralph/
 *tmp/
+*.envrc
