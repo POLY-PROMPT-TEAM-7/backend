@@ -1,10 +1,10 @@
-from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import KnowledgeEntity
+from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import RelationshipType
-from pydantic import model_validator
-from pydantic import field_validator
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import field_validator
+from pydantic import model_validator
 from pathlib import Path
 from typing import Any
 

@@ -1,8 +1,9 @@
-from ..models import TextractAdapterResult
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
-
+from backend_placeholder.models import TextractAdapterResult
+from textract import exceptions as textract_exceptions
+import textract
+from pathlib import Path
 
 def _classify_shell_error(message: str) -> str:
   lowered = message.lower()
@@ -10,19 +11,7 @@ def _classify_shell_error(message: str) -> str:
     return "missing_parser_dependency"
   return "shell_error"
 
-
 def extract_text(file_path: Path, timeout_seconds: int = 45) -> TextractAdapterResult:
-  try:
-    import textract  # type: ignore
-    from textract import exceptions as textract_exceptions  # type: ignore
-  except Exception as exc:
-    return TextractAdapterResult(
-      text="",
-      metadata_status="error",
-      error_code="textract_unavailable",
-      error_message=str(exc),
-    )
-
   if not file_path.exists() or not file_path.is_file():
     return TextractAdapterResult(
       text="",

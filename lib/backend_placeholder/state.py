@@ -1,13 +1,13 @@
-from StudyOntology.lib import KnowledgeRelationship
+from StudyOntology.lib import Assignment
 from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import KnowledgeGraph
+from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import SourceDocument
-from StudyOntology.lib import Assignment
-from typing import Annotated
-from typing import TypedDict
-from typing import Optional
 from operator import add
+from typing import Annotated
 from typing import Any
+from typing import Optional
+from typing import TypedDict
 
 class KnowledgeExtractionState(TypedDict):
   filename: str

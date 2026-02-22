@@ -1,17 +1,20 @@
-from . import models
-from StudyOntology.lib import RelationshipType
-from StudyOntology.lib import KnowledgeGraph
 from StudyOntology.lib import Assignment
 from StudyOntology.lib import Concept
-from StudyOntology.lib import Theory
-from StudyOntology.lib import Person
+from StudyOntology.lib import KnowledgeGraph
 from StudyOntology.lib import Method
-from pathlib import Path
-from datetime import datetime
+from StudyOntology.lib import Person
+from StudyOntology.lib import RelationshipType
+from StudyOntology.lib import Theory
 from datetime import UTC
-from typing import Any
+from datetime import datetime
+from pathlib import Path
 import duckdb
+from typing import Any
 import json
+from backend_placeholder.models import EntityRecord
+from backend_placeholder.models import GraphSubgraphResponse
+from backend_placeholder.models import RelationshipRecord
+from backend_placeholder.models import SourceRecord
 
 DB_PATH: Path = Path("/tmp/knowledge.duckdb")
 
@@ -266,9 +269,9 @@ def _source_ids_from_payload(payload: dict[str, Any]) -> set[str]:
   return bucket
 
 
-def _relationship_record_from_row(row: tuple[Any, ...]) -> models.RelationshipRecord:
+def _relationship_record_from_row(row: tuple[Any, ...]) -> RelationshipRecord:
   payload = _loads_json(str(row[3]))
-  return models.RelationshipRecord(
+  return RelationshipRecord(
     subject_entity_id=str(row[0]),
     object_entity_id=str(row[1]),
     relationship_type=str(row[2]),
@@ -277,9 +280,9 @@ def _relationship_record_from_row(row: tuple[Any, ...]) -> models.RelationshipRe
   )
 
 
-def _entity_record_from_row(row: tuple[Any, ...]) -> models.EntityRecord:
+def _entity_record_from_row(row: tuple[Any, ...]) -> EntityRecord:
   payload = _loads_json(str(row[2]))
-  return models.EntityRecord(
+  return EntityRecord(
     entity_id=str(row[0]),
     entity_name=str(row[1]),
     entity_type=str(row[3]),
@@ -287,16 +290,16 @@ def _entity_record_from_row(row: tuple[Any, ...]) -> models.EntityRecord:
   )
 
 
-def _source_record_from_row(row: tuple[Any, ...]) -> models.SourceRecord:
+def _source_record_from_row(row: tuple[Any, ...]) -> SourceRecord:
   payload = _loads_json(str(row[2]))
-  return models.SourceRecord(
+  return SourceRecord(
     source_id=str(row[0]),
     source_name=str(row[1]),
     data=payload,
   )
 
 
-def _fetch_entities_by_ids(entity_ids: set[str], db_path: Path = DB_PATH) -> list[models.EntityRecord]:
+def _fetch_entities_by_ids(entity_ids: set[str], db_path: Path = DB_PATH) -> list[EntityRecord]:
   if not entity_ids:
     return []
   con = duckdb.connect(db_path)
@@ -311,7 +314,7 @@ def _fetch_entities_by_ids(entity_ids: set[str], db_path: Path = DB_PATH) -> lis
     con.close()
 
 
-def _fetch_sources_by_ids(source_ids: set[str], db_path: Path = DB_PATH) -> list[models.SourceRecord]:
+def _fetch_sources_by_ids(source_ids: set[str], db_path: Path = DB_PATH) -> list[SourceRecord]:
   if not source_ids:
     return []
   con = duckdb.connect(db_path)
@@ -332,7 +335,7 @@ def list_relationships_by_confidence(
   min_confidence: float | None = None,
   max_confidence: float | None = None,
   db_path: Path = DB_PATH,
-) -> tuple[list[models.RelationshipRecord], int]:
+) -> tuple[list[RelationshipRecord], int]:
   con = duckdb.connect(db_path)
   try:
     conditions: list[str] = []
@@ -356,14 +359,14 @@ def list_relationships_by_confidence(
 
 
 def _graph_response_from_relationships(
-  relationships: list[models.RelationshipRecord],
+  relationships: list[RelationshipRecord],
   total_relationships: int,
   limit: int,
   offset: int,
   forced_source_ids: set[str] | None = None,
   forced_entity_ids: set[str] | None = None,
   db_path: Path = DB_PATH,
-) -> models.GraphSubgraphResponse:
+) -> GraphSubgraphResponse:
   entity_ids: set[str] = set()
   source_ids: set[str] = set(forced_source_ids or set())
   for rel in relationships:
@@ -376,7 +379,7 @@ def _graph_response_from_relationships(
   for entity in entities:
     source_ids.update(_source_ids_from_payload(entity.data))
   sources = _fetch_sources_by_ids(source_ids, db_path=db_path)
-  return models.GraphSubgraphResponse(
+  return GraphSubgraphResponse(
     entities=entities,
     relationships=relationships,
     sources=sources,
@@ -388,10 +391,10 @@ def _graph_response_from_relationships(
   )
 
 
-def get_subgraph_by_source_ids(source_ids: list[str], limit: int, offset: int, db_path: Path = DB_PATH) -> models.GraphSubgraphResponse:
+def get_subgraph_by_source_ids(source_ids: list[str], limit: int, offset: int, db_path: Path = DB_PATH) -> GraphSubgraphResponse:
   source_set = {x for x in source_ids if x}
   if not source_set:
-    return models.GraphSubgraphResponse(
+    return GraphSubgraphResponse(
       entities=[],
       relationships=[],
       sources=[],
@@ -410,7 +413,7 @@ def get_subgraph_by_source_ids(source_ids: list[str], limit: int, offset: int, d
   finally:
     con.close()
 
-  filtered: list[models.RelationshipRecord] = []
+  filtered: list[RelationshipRecord] = []
   for row in rows:
     rel = _relationship_record_from_row(row)
     if _source_ids_from_payload(rel.data) & source_set:
@@ -428,11 +431,11 @@ def get_subgraph_by_source_ids(source_ids: list[str], limit: int, offset: int, d
   )
 
 
-def get_subgraph_by_source_id(source_id: str, limit: int, offset: int, db_path: Path = DB_PATH) -> models.GraphSubgraphResponse:
+def get_subgraph_by_source_id(source_id: str, limit: int, offset: int, db_path: Path = DB_PATH) -> GraphSubgraphResponse:
   return get_subgraph_by_source_ids(source_ids=[source_id], limit=limit, offset=offset, db_path=db_path)
 
 
-def get_subgraph_by_entity(entity_id_or_name: str, limit: int, offset: int, db_path: Path = DB_PATH) -> models.GraphSubgraphResponse:
+def get_subgraph_by_entity(entity_id_or_name: str, limit: int, offset: int, db_path: Path = DB_PATH) -> GraphSubgraphResponse:
   con = duckdb.connect(db_path)
   try:
     row = con.execute(
@@ -445,7 +448,7 @@ def get_subgraph_by_entity(entity_id_or_name: str, limit: int, offset: int, db_p
         [entity_id_or_name],
       ).fetchone()
     if row is None:
-      return models.GraphSubgraphResponse(
+      return GraphSubgraphResponse(
         entities=[],
         relationships=[],
         sources=[],
@@ -482,7 +485,7 @@ def get_subgraph_by_relationship_type(
   limit: int,
   offset: int,
   db_path: Path = DB_PATH,
-) -> models.GraphSubgraphResponse:
+) -> GraphSubgraphResponse:
   con = duckdb.connect(db_path)
   try:
     rows = con.execute(
@@ -509,9 +512,9 @@ def get_subgraph_by_entity_types(
   limit: int,
   offset: int,
   db_path: Path = DB_PATH,
-) -> models.GraphSubgraphResponse:
+) -> GraphSubgraphResponse:
   if not entity_types:
-    return models.GraphSubgraphResponse(
+    return GraphSubgraphResponse(
       entities=[],
       relationships=[],
       sources=[],
@@ -530,7 +533,7 @@ def get_subgraph_by_entity_types(
     ).fetchall()
     entity_ids = {str(row[0]) for row in entity_rows}
     if not entity_ids:
-      return models.GraphSubgraphResponse(
+      return GraphSubgraphResponse(
         entities=[],
         relationships=[],
         sources=[],

@@ -1,16 +1,16 @@
 from backend_placeholder.state import KnowledgeExtractionState
-from StudyOntology.lib import KnowledgeRelationship
-from langchain_core.messages import SystemMessage
 from langchain_core.messages import HumanMessage
-from StudyOntology.lib import RelationshipType
-from StudyOntology.lib import KnowledgeEntity
+from langchain_core.messages import SystemMessage
 from StudyOntology.lib import Assignment
+from StudyOntology.lib import KnowledgeEntity
+from StudyOntology.lib import KnowledgeRelationship
+from StudyOntology.lib import RelationshipType
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from pydantic import SecretStr
+from typing import Any
 from typing import Optional
 from typing import cast
-from typing import Any
 import os
 
 class CanvasLinkPayload(BaseModel):

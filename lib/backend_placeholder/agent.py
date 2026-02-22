@@ -1,22 +1,22 @@
 from backend_placeholder.integrations.enrich_openalex import enrich_with_openalex
 from backend_placeholder.nodes.schema_options import inject_graph_schema_options
-from backend_placeholder.nodes.link_canvas import link_canvas_assignments
-from backend_placeholder.nodes.extract_graph import retry_extract_graph
-from backend_placeholder.nodes.retry_flow import route_after_validate
 from backend_placeholder.nodes.validate_graph import validate_graph
-from backend_placeholder.nodes.extract_graph import extract_graph
 from backend_placeholder.integrations.canvas import canvas_node
-from backend_placeholder.state import KnowledgeExtractionState
+from backend_placeholder.nodes.extract_graph import extract_graph
+from backend_placeholder.nodes.extract_graph import retry_extract_graph
+from backend_placeholder.nodes.link_canvas import link_canvas_assignments
+from backend_placeholder.nodes.retry_flow import route_after_validate
 from backend_placeholder.nodes.mkgraph import mkgraph
+from backend_placeholder.state import KnowledgeExtractionState
 from StudyOntology.lib import KnowledgeGraph
 from StudyOntology.lib import SourceDocument
-from langgraph.graph import StateGraph
-from langgraph.graph import START
 from langgraph.graph import END
-from typing import Optional
-from typing import Literal
-from typing import cast
+from langgraph.graph import START
+from langgraph.graph import StateGraph
 from typing import Any
+from typing import Literal
+from typing import Optional
+from typing import cast
 
 def openalex_gate(state: KnowledgeExtractionState) -> dict[str, Any]:
   _ = state

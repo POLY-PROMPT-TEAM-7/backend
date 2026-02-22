@@ -1,13 +1,13 @@
-from backend_placeholder.state import KnowledgeExtractionState
 from backend_placeholder.models import ExtractedGraphPayload
-from langchain_core.messages import SystemMessage
+from backend_placeholder.state import KnowledgeExtractionState
 from langchain_core.messages import HumanMessage
+from langchain_core.messages import SystemMessage
 from StudyOntology.lib import RelationshipType
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
+from typing import Any
 from typing import Optional
 from typing import cast
-from typing import Any
 import os
 
 # Precanned expert extraction prompt - not user-configurable

@@ -1,6 +1,6 @@
 from StudyOntology.lib import Assignment
-from typing import Any
 import requests
+from typing import Any
 import os
 
 def get_canvas_api_key() -> str:

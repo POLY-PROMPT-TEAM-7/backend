@@ -1,13 +1,13 @@
 from backend_placeholder.state import KnowledgeExtractionState
-from StudyOntology.lib import KnowledgeRelationship
+from StudyOntology.lib import Assignment
+from StudyOntology.lib import Concept
 from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import KnowledgeGraph
-from StudyOntology.lib import SourceDocument
-from StudyOntology.lib import Assignment
+from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import Method
 from StudyOntology.lib import Person
+from StudyOntology.lib import SourceDocument
 from StudyOntology.lib import Theory
-from StudyOntology.lib import Concept
 from typing import Any
 
 def mkgraph(state: KnowledgeExtractionState) -> dict[str, Any]:

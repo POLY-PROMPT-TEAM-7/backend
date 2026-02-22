@@ -1,8 +1,8 @@
 from backend_placeholder.state import KnowledgeExtractionState
+from StudyOntology.lib import Assignment
+from StudyOntology.lib import KnowledgeEntity
 from StudyOntology.lib import KnowledgeRelationship
 from StudyOntology.lib import RelationshipType
-from StudyOntology.lib import KnowledgeEntity
-from StudyOntology.lib import Assignment
 from typing import Any
 
 def validate_graph(state: KnowledgeExtractionState) -> dict[str, Any]:

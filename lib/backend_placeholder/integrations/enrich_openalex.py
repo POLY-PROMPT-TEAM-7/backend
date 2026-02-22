@@ -1,13 +1,13 @@
 from backend_placeholder.state import KnowledgeExtractionState
-from StudyOntology.lib import KnowledgeRelationship
-from StudyOntology.lib import ExtractionProvenance
-from StudyOntology.lib import RelationshipType
-from StudyOntology.lib import KnowledgeEntity
-from StudyOntology.lib import SourceDocument
-from StudyOntology.lib import DocumentOrigin
 from StudyOntology.lib import Concept
-from typing import Optional
+from StudyOntology.lib import DocumentOrigin
+from StudyOntology.lib import ExtractionProvenance
+from StudyOntology.lib import KnowledgeEntity
+from StudyOntology.lib import KnowledgeRelationship
+from StudyOntology.lib import RelationshipType
+from StudyOntology.lib import SourceDocument
 from typing import Any
+from typing import Optional
 import httpx
 import os
 

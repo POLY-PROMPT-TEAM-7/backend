@@ -1,23 +1,22 @@
-from .textract_adapter import extract_text
-from .path_safety import normalize_filename
-from .path_safety import build_artifact_path
-from .path_safety import build_upload_path
-from .errors import ServiceError
-from ..models import UploadArtifact
-from ..models import UploadResponse
-from fastapi import UploadFile
-from datetime import datetime
+from backend_placeholder.services.textract_adapter import extract_text
+from backend_placeholder.services.path_safety import build_artifact_path
+from backend_placeholder.services.path_safety import build_upload_path
+from backend_placeholder.services.path_safety import normalize_filename
+from backend_placeholder.models import UploadArtifact
+from backend_placeholder.models import UploadResponse
 from datetime import UTC
-from pathlib import Path
+from datetime import datetime
+from backend_placeholder.services.errors import ServiceError
+from fastapi import UploadFile
 from hashlib import sha256
-from uuid import uuid4
+from pathlib import Path
 import gzip
+from uuid import uuid4
 
 MAX_COMPRESSED_BYTES: int = 20 * 1024 * 1024
 MAX_DECOMPRESSED_BYTES: int = 100 * 1024 * 1024
 READ_CHUNK_SIZE: int = 1024 * 1024
 EXTRACTION_TIMEOUT_SECONDS: int = 45
-
 
 async def ingest_upload(upload_file: UploadFile) -> UploadResponse:
   normalized_filename = normalize_filename(upload_file.filename or "upload.gz")
