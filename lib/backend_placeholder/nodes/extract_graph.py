@@ -40,8 +40,11 @@ def build_retry_prompt(
 
 def extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   schema_options: dict[str, Any] = state.get("graph_schema_options", {})
+  extracted_text: str = state.get("extracted_text", "")
+  print(f"[extract_graph] start text_len={len(extracted_text)}")
   llm: Optional[ChatOpenAI] = get_llm()
   if llm is None:
+    print("[extract_graph] skipped missing OPENAI_API_KEY")
     return {
       "raw_entities": [],
       "raw_relationships": [],
@@ -51,13 +54,14 @@ def extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   extractor = llm.with_structured_output(ExtractedGraphPayload)
   try:
     result = cast(
-      ExtractedGraphPayload,
-      extractor.invoke([
-        SystemMessage(content=build_extraction_prompt(schema_options)),
-        HumanMessage(content=state.get("extracted_text", ""))
-      ])
-    )
+        ExtractedGraphPayload,
+        extractor.invoke([
+          SystemMessage(content=build_extraction_prompt(schema_options)),
+          HumanMessage(content=extracted_text)
+        ])
+      )
   except Exception as e:
+    print(f"[extract_graph] failed: {e}")
     return {
       "raw_entities": state.get("raw_entities", []),
       "raw_relationships": state.get("raw_relationships", []),
@@ -76,9 +80,12 @@ def extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
 def retry_extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   schema_options: dict[str, Any] = state.get("graph_schema_options", {})
   validation_errors: list[str] = state.get("validation_errors", [])
+  extracted_text: str = state.get("extracted_text", "")
   llm: Optional[ChatOpenAI] = get_llm()
   next_retry_count: int = state.get("retry_count", 0) + 1
+  print(f"[retry_extract_graph] start retry={next_retry_count} text_len={len(extracted_text)} errors={len(validation_errors)}")
   if llm is None:
+    print("[retry_extract_graph] skipped missing OPENAI_API_KEY")
     return {
       "retry_count": next_retry_count,
       "validation_errors": ["OPENAI_API_KEY missing"],
@@ -87,19 +94,21 @@ def retry_extract_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   extractor = llm.with_structured_output(ExtractedGraphPayload)
   try:
     result = cast(
-      ExtractedGraphPayload,
-      extractor.invoke([
-        SystemMessage(content=build_retry_prompt(validation_errors, schema_options)),
-        HumanMessage(content=state.get("extracted_text", ""))
-      ])
-    )
+        ExtractedGraphPayload,
+        extractor.invoke([
+          SystemMessage(content=build_retry_prompt(validation_errors, schema_options)),
+          HumanMessage(content=extracted_text)
+        ])
+      )
   except Exception as e:
+    print(f"[retry_extract_graph] failed retry={next_retry_count}: {e}")
     return {
       "retry_count": next_retry_count,
       "validation_errors": [f"retry_extract_graph failed: {e}"],
       "processing_log": state.get("processing_log", [])
     }
-  msg = f"[retry_extract_graph] Retry {next_retry_count} completed."
+  msg = f"[retry_extract_graph] Retry {next_retry_count} completed with {len(result.entities)} entities and {len(result.relationships)} relationships."
+  print(msg)
   return {
     "raw_entities": result.entities,
     "raw_relationships": result.relationships,

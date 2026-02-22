@@ -31,12 +31,17 @@ def build_assignments(active_courses: list[dict[str, Any]]) -> list[Assignment]:
     raw_assignments: list[dict[str, Any]] = get_assignments(course_id)
 
     for a in raw_assignments:
+      canvas_assignment_id: Any = a.get("id")
+      if canvas_assignment_id is None:
+        continue
+
       assignments += [Assignment(
+        id=f"assignment:{canvas_assignment_id}",
         course_id=str(course_id),
         course_name=course_name,
         name=a.get("name", "Untitled"),
         description=a.get("description"),
-        canvas_assignment_id=a.get("id"),
+        canvas_assignment_id=canvas_assignment_id,
         due_date=a.get("due_at"),
         points_possible=a.get("points_possible"),
         html_url=a.get("html_url"),

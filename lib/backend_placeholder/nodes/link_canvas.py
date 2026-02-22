@@ -64,6 +64,7 @@ def link_canvas_assignments(state: KnowledgeExtractionState) -> dict[str, Any]:
   # 2nd LLM pass: link Canvas assignments to extracted concepts
   assignments: list[Assignment] = normalize_assignments(state.get("canvas_assignments", []))
   if len(assignments) == 0:
+    print("[link_canvas] skipped no assignments")
     return {
       "raw_relationships": state.get("raw_relationships", []),
       "processing_log": state.get("processing_log", [])
@@ -71,6 +72,7 @@ def link_canvas_assignments(state: KnowledgeExtractionState) -> dict[str, Any]:
 
   llm: Optional[ChatOpenAI] = get_llm()
   if llm is None:
+    print("[link_canvas] skipped missing OPENAI_API_KEY")
     return {
       "raw_relationships": state.get("raw_relationships", []),
       "processing_log": state.get("processing_log", [])
@@ -88,6 +90,7 @@ def link_canvas_assignments(state: KnowledgeExtractionState) -> dict[str, Any]:
       ])
     )
   except Exception:
+    print("[link_canvas] failed extractor invoke")
     return {
       "raw_relationships": raw_relationships,
       "processing_log": state.get("processing_log", [])
@@ -106,6 +109,7 @@ def link_canvas_assignments(state: KnowledgeExtractionState) -> dict[str, Any]:
       and ((x.subject in assignment_ids and x.object in entity_ids) or (x.subject in entity_ids and x.object in assignment_ids))
     )
   ]
+  print(f"[link_canvas] linked={len(linked)} assignments={len(assignments)} entities={len(raw_entities)}")
   return {
     "raw_relationships": raw_relationships + linked,
     "processing_log": state.get("processing_log", [])

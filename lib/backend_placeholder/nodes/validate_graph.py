@@ -9,7 +9,7 @@ def validate_graph(state: KnowledgeExtractionState) -> dict[str, Any]:
   entities: list[KnowledgeEntity] = state.get("raw_entities", [])
   relationships: list[KnowledgeRelationship] = state.get("raw_relationships", [])
 
-  errors: list[str] = []
+  errors: list[str] = list(state.get("validation_errors", []))
   entity_ids: set[str] = set()
 
   for x in entities:

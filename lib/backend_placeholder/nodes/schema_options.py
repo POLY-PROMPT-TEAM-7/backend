@@ -21,6 +21,7 @@ def inject_graph_schema_options(state: KnowledgeExtractionState) -> dict[str, An
     "relationship_schema": KnowledgeRelationship.model_json_schema()
   }
   msg: str = "[inject_graph_schema_options] Loaded JSON schema options for extraction."
+  print(msg)
   return {
     "graph_schema_options": options,
     "processing_log": state.get("processing_log", []) + [msg]

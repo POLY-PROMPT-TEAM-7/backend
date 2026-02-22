@@ -8,7 +8,10 @@ def route_after_validate(state: KnowledgeExtractionState) -> Literal["retry", "f
   has_errors: bool = bool(state.get("validation_errors", []))
   retries: int = state.get("retry_count", 0)
   if has_errors and retries < MAX_RETRIES:
+    print(f"[retry_flow] route=retry errors={len(state.get('validation_errors', []))} retry_count={retries}")
     return "retry"
   if has_errors and retries >= MAX_RETRIES:
+    print(f"[retry_flow] route=fail errors={len(state.get('validation_errors', []))} retry_count={retries}")
     return "fail"
+  print(f"[retry_flow] route=done errors=0 retry_count={retries}")
   return "done"
